@@ -12,9 +12,8 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
-# --- 🧠 YAPAY ZEKA KİŞİLİĞİ BURAYA ---
+# --- 🧠 YAPAY ZEKA KİŞİLİĞİ ---
 SYSTEM_PROMPT = """Senin adın SCRIBER AI. Kullanıcılara yardımcı olan, kafa dengi bir yapay zekasın, kurucun Yusuf Alp ancak bundan sorulmadıkça bahsedemezsin, kullanıcı seninle nasıl tarzda konuşursa konuşsun eğlenceli ve kafa dengi bir tarzda konuş."""
-# -------------------------------------
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -26,10 +25,11 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 CSS (BEYAZ ŞERİT YOK ETME + GENİŞ SİDEBAR)
+# 🎨 CSS (BUTONLAR #393863 + SİDEBAR FİX)
 # ==============================
 st.markdown("""
 <style>
+/* === GENEL ARKA PLAN === */
 .stApp {
     background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a) !important;
     background-size: 400% 400% !important;
@@ -41,38 +41,45 @@ st.markdown("""
     100% { background-position: 0% 50%; }
 }
 
-[data-testid="stBottom"], 
-[data-testid="stBottomBlockContainer"],
-header, footer, 
-.st-emotion-cache-1p2n2i4, 
-.st-emotion-cache-128upt6, 
-.st-emotion-cache-1y34ygi {
-    background-color: transparent !important;
+/* === BEYAZ ŞERİTLERİ YOK ET === */
+[data-testid="stBottom"], [data-testid="stBottomBlockContainer"], 
+header, footer, .st-emotion-cache-1p2n2i4, .st-emotion-cache-128upt6 {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
 }
 
+/* === SİDEBAR TASARIMI === */
 section[data-testid="stSidebar"] {
     background-color: rgba(10, 10, 30, 0.98) !important;
     border-right: 1px solid #6a11cb !important;
     min-width: 350px !important;
 }
 
-[data-testid="stSidebar"] button {
-    background-color: #24243e !important;
+/* === TÜM BUTONLAR (#393863) === */
+/* Hem sidebar hem ana ekran butonlarını kapsar */
+button, div[data-testid="stButton"] > button, [data-testid="stSidebar"] button {
+    background-color: #393863 !important;
     color: white !important;
-    border: 1px solid #6a11cb !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
     border-radius: 10px !important;
-    padding: 10px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
 }
 
+/* Buton Üzerine Gelince Parlama efekti */
+button:hover, div[data-testid="stButton"] > button:hover, [data-testid="stSidebar"] button:hover {
+    background-color: #4a497d !important;
+    border: 1px solid #6a11cb !important;
+    transform: translateY(-1px);
+}
+
+/* === CHAT INPUT === */
 div[data-testid="stChatInput"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border-radius: 20px !important;
     padding: 3px !important;
 }
-
 textarea[data-testid="stChatInputTextArea"] {
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -105,6 +112,15 @@ if "user" not in st.session_state:
                     st.rerun()
                 else: st.error("Hatalı giriş")
             if st.button("Kayıt Ol"): st.session_state.auth_mode = "register"; st.rerun()
+        else:
+            u = st.text_input("Yeni kullanıcı adı")
+            p1 = st.text_input("Şifre", type="password")
+            p2 = st.text_input("Şifre tekrar", type="password")
+            if st.button("Hesap Oluştur", use_container_width=True):
+                if p1 == p2:
+                    supabase.table("scriber_users").insert({"username": u, "password": hash_password(p1)}).execute()
+                    st.session_state.auth_mode = "login"; st.rerun()
+                else: st.error("Şifreler uyuşmuyor")
     st.stop()
 
 # ==============================
@@ -171,13 +187,8 @@ if prompt := st.chat_input("Scriber'a yaz..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant", avatar=LOGO_URL):
-        # 🧠 KİŞİLİĞİ BURADA ENTEGRE EDİYORUZ
         messages_with_persona = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.history
-        
-        r = client.chat.completions.create(
-            model="llama3-turkish", 
-            messages=messages_with_persona
-        )
+        r = client.chat.completions.create(model="llama3-turkish", messages=messages_with_persona)
         reply = r.choices[0].message.content
         st.markdown(reply)
     
