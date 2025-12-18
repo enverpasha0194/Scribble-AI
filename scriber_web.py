@@ -3,10 +3,10 @@ from openai import OpenAI
 import time
 
 # ============================================================
-# NGROK ADRESİNİ BURAYA TAM OLARAK YAPIŞTIR
-# (Terminaldeki adresi kopyala, sonuna /v1 ekle)
+# ÖNEMLİ: SADECE ANA ADRESİ YAZ (Sonuna /v1 EKLEME!)
+# Terminalde ne görüyorsan o: https://....ngrok-free.dev
 # ============================================================
-NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev/v1" 
+NGROK_ANA_ADRES = "https://hydropathical-duodecastyle-camron.ngrok-free.dev" 
 
 # ==============================
 # AYARLAR VE LOGOLAR
@@ -17,18 +17,14 @@ PAPERCLIP_URL = "https://emojigraph.org/media/joypixels/paperclip_1f4ce.png"
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="centered")
 
 # ==============================
-# CSS (Arayüz Aynı Kalıyor)
+# CSS (Arayüz Aynı)
 # ==============================
 st.markdown(f"""
 <style>
-#MainMenu {{visibility: hidden;}}
-footer {{visibility: hidden;}}
-header {{visibility: hidden;}}
+#MainMenu {{visibility: hidden;}} footer {{visibility: hidden;}} header {{visibility: hidden;}}
 .stApp {{ background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }}
 .stChatMessage {{ background-color: rgba(255, 255, 255, 0.1) !important; color: white !important; border-radius: 15px !important; }}
 .stMarkdown p {{ color: white !important; }}
-
-/* ATAÇ BUTONU */
 div[data-testid="stFileUploader"] {{ position: fixed; bottom: 28px; left: calc(50% - 395px); z-index: 999999; width: 50px; }}
 div[data-testid="stFileUploader"] section {{ padding: 0 !important; min-height: 0 !important; background: transparent !important; border: none !important; }}
 div[data-testid="stFileUploader"] label, div[data-testid="stFileUploader"] small, div[data-testid="stFileUploader"] p {{ display: none !important; }}
@@ -41,21 +37,21 @@ div[data-testid="stFileUploader"] button {{
 """, unsafe_allow_html=True)
 
 # ==============================
-# ÖNEMLİ: BAĞLANTI AYARI
+# BAĞLANTI AYARI (GÜNCELLENDİ)
 # ==============================
-# Ngrok'un "Burası bir tüneldir" uyarı sayfasını atlamak için header ekliyoruz
+# Buradaki base_url'in sonuna kod içinde /v1 ekliyoruz
 client = OpenAI(
-    base_url=NGROK_URL, 
+    base_url=f"{NGROK_ANA_ADRES}/v1", 
     api_key="lm-studio",
-    default_headers={"ngrok-skip-browser-warning": "true"} 
+    default_headers={"ngrok-skip-browser-warning": "true"}
 )
 
-# ... (Karakter ve Mesaj Geçmişi Bölümü Aynı) ...
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "Senin adın Scriber. Yusuf Alp Güngören senin baban. Karakterin samimi ve özgür."}]
+    st.session_state.messages = [{"role": "system", "content": "Sen Scriber'sın. Yusuf Alp senin baban."}]
 
 st.markdown('<div style="text-align:center;"><img src="'+LOGO_URL+'" width="80"><h1>SCRIBER AI</h1></div>', unsafe_allow_html=True)
 
+# Mesaj Geçmişini Göster
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"], avatar=LOGO_URL if message["role"]=="assistant" else "👤"):
@@ -71,8 +67,9 @@ if prompt := st.chat_input("Scriber ile konuş..."):
         placeholder = st.empty()
         full_response = ""
         try:
+            # LM Studio'ya asıl isteği gönderdiğimiz yer
             response = client.chat.completions.create(
-                model="llama3-turkish",
+                model="llama3-turkish", # LM Studio'da yüklü model ismini kontrol et
                 messages=st.session_state.messages,
                 stream=True
             )
@@ -83,4 +80,4 @@ if prompt := st.chat_input("Scriber ile konuş..."):
             placeholder.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
         except Exception as e:
-            st.error(f"Bağlantı Hatası: Kanka sunucuya ulaşılamıyor. \nAdres doğru mu? {NGROK_URL} \nHata: {e}")
+            st.error(f"Bağlantı Hatası: {e}")
