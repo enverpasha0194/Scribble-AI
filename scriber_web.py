@@ -14,32 +14,90 @@ LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="wide")
+# Sidebar'ı başlangıçta açık ve görünür tutar
+st.set_page_config(
+    page_title="SCRIBER AI", 
+    page_icon=LOGO_URL, 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # ==============================
-# 🎨 CSS
+# 🎨 CSS (KESİN ÇÖZÜM: BEYAZ ŞERİT YOK ETME + GENİŞ SİDEBAR)
 # ==============================
 st.markdown("""
 <style>
+/* === 1. ARKA PLAN VE ANA YAPI === */
 .stApp {
-    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a) !important;
+    background-size: 400% 400% !important;
+    animation: gradient 15s ease infinite !important;
 }
 @keyframes gradient {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-[data-testid="stBottom"], [data-testid="stBottomBlockContainer"], .st-emotion-cache-1p2n2i4, .st-emotion-cache-128upt6, .st-emotion-cache-1y34ygi {
-    background: transparent !important; border: none !important;
+
+/* === 2. BEYAZ ŞERİTLERİ VE ALT PANELİ KÖKTEN SİL === */
+/* Bu blok her türlü beyazlığı ve gölgeyi şeffaf yapar */
+[data-testid="stBottom"], 
+[data-testid="stBottomBlockContainer"],
+header, footer, 
+.st-emotion-cache-1p2n2i4, 
+.st-emotion-cache-128upt6, 
+.st-emotion-cache-1y34ygi,
+.st-emotion-cache-6q9sum,
+.st-emotion-cache-zq5tm5 {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
-div[data-testid="stChatInput"] { background-color: rgba(255,255,255,0.05) !important; border-radius: 20px !important; padding: 3px !important; }
-textarea[data-testid="stChatInputTextArea"] { background-color: #ffffff !important; color: #000000 !important; border-radius: 17px !important; border: none !important; }
-button, div[data-testid="stButton"] > button { background-color: #393863 !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; }
-section[data-testid="stSidebar"] { background-color: rgba(5,5,20,0.9) !important; border-right: 1px solid #6a11cb !important; }
-header, footer, #MainMenu { visibility: hidden; }
-h1,h2,h3,p,span,label,div { color: white !important; }
+
+/* === 3. SİDEBARI GENİŞLET VE BELİRGİNLEŞTİR === */
+section[data-testid="stSidebar"] {
+    background-color: rgba(10, 10, 30, 0.98) !important; /* Daha tok bir koyuluk */
+    border-right: 1px solid #6a11cb !important;
+    min-width: 350px !important; /* İncecik görüntüyü burada bitiriyoruz */
+    max-width: 400px !important;
+}
+
+/* Sidebar içindeki butonları daha şık yap */
+[data-testid="stSidebar"] button {
+    background-color: #24243e !important;
+    color: white !important;
+    border: 1px solid #6a11cb !important;
+    border-radius: 10px !important;
+    padding: 10px !important;
+}
+
+/* === 4. CHAT INPUT (RENKLİ ÇERÇEVEYE OTURT) === */
+div[data-testid="stChatInput"] {
+    background-color: rgba(255, 255, 255, 0.05) !important; /* O garip renkli halkanın içi */
+    border-radius: 20px !important;
+    padding: 3px !important; /* Beyaz kutuyu bu halkanın içine hapseder */
+}
+
+textarea[data-testid="stChatInputTextArea"] {
+    background-color: #ffffff !important; /* Kutunun içi bembeyaz */
+    color: #000000 !important; /* Yazı siyah */
+    border-radius: 17px !important;
+    border: none !important;
+}
+
+/* Gönder butonunu ikon rengiyle düzelt */
+button[data-testid="stChatInputSubmitButton"] {
+    color: #6a11cb !important;
+    background-color: transparent !important;
+}
+
+/* Genel yazı renkleri */
+h1, h2, h3, p, span, label, b {
+    color: white !important;
+}
+#MainMenu { visibility: hidden; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -82,7 +140,10 @@ if "chat_id" not in st.session_state: st.session_state.chat_id = None
 if "history" not in st.session_state: st.session_state.history = []
 
 def load_chats():
-    return supabase.table("scriber_chats").select("*").eq("username", st.session_state.user).order("created_at", desc=True).execute().data
+    try:
+        res = supabase.table("scriber_chats").select("*").eq("username", st.session_state.user).order("created_at", desc=True).execute()
+        return res.data if res.data else []
+    except: return []
 
 def save_message(role, content):
     if st.session_state.chat_id:
@@ -97,7 +158,7 @@ def save_message(role, content):
 # ==============================
 with st.sidebar:
     st.image(LOGO_URL, width=100)
-    st.write(f"👋 **Hoş geldin, {st.session_state.user}!**")
+    st.markdown(f"### 👋 Hoş geldin, \n**{st.session_state.user}**")
     
     if st.button("➕ Yeni Sohbet", use_container_width=True):
         st.session_state.chat_id = None
@@ -105,10 +166,11 @@ with st.sidebar:
         st.rerun()
     
     st.write("---")
-    st.write("📜 **Sohbetler**")
+    st.markdown("### 📜 Sohbetler")
     chats = load_chats()
     for c in chats:
-        if st.button(f"💬 {c['title'][:20]}...", key=c['id'], use_container_width=True):
+        # Sohbet başlığına tıklandığında mesajları yükler
+        if st.button(f"💬 {c['title'][:25]}", key=c['id'], use_container_width=True):
             st.session_state.chat_id = c['id']
             msgs = supabase.table("scriber_messages").select("*").eq("chat_id", c['id']).order("created_at").execute().data
             st.session_state.history = [{"role": m["role"], "content": m["content"]} for m in msgs]
@@ -125,21 +187,22 @@ for msg in st.session_state.history:
         st.markdown(msg["content"])
 
 if prompt := st.chat_input("Scriber'a yaz..."):
-    # Eğer yeni bir sohbetse önce sohbeti oluştur
+    # Yeni Sohbet ise DB'ye kaydet
     if st.session_state.chat_id is None:
         new_chat = supabase.table("scriber_chats").insert({
             "username": st.session_state.user,
-            "title": prompt[:30] # İlk kelime/cümle başlık olur
+            "title": prompt[:30]
         }).execute()
-        st.session_state.chat_id = new_chat.data[0]["id"]
+        if new_chat.data:
+            st.session_state.chat_id = new_chat.data[0]["id"]
 
-    # Kullanıcı mesajını kaydet ve göster
+    # Kullanıcı mesajını göster ve kaydet
     st.session_state.history.append({"role": "user", "content": prompt})
     save_message("user", prompt)
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Yapay zeka yanıtı
+    # Yanıt üret
     with st.chat_message("assistant", avatar=LOGO_URL):
         r = client.chat.completions.create(model="llama3-turkish", messages=st.session_state.history)
         reply = r.choices[0].message.content
