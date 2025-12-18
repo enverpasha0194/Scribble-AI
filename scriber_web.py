@@ -1,80 +1,67 @@
 import streamlit as st
 from openai import OpenAI
-import uuid
 from supabase import create_client, Client
 
-# ============================================================
-# 🔑 SUPABASE BİLGİLERİNİ BURAYA GİR
+# ==============================
+# 🔑 AYARLAR (Kendi bilgilerinle doldur)
 # ==============================
 SUPABASE_URL = "https://rhenrzjfkiefhzfkkwgv.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoZW5yempma2llZmh6Zmtrd2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNzY3MTMsImV4cCI6MjA4MTY1MjcxM30.gwjvIT5M8PyP9SBysXImyNblPm6XNwJTeZAayUeVCxU"
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
-# ============================================================
+LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
 # Supabase Bağlantısı
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Sayfa Ayarları
-LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="wide")
 
 # ==============================
-# CSS: PROFESYONEL YAN MENÜ & DARK TEMA
+# CSS: TASARIM
 # ==============================
 st.markdown(f"""
 <style>
     #MainMenu, footer, header {{visibility: hidden;}}
     .stApp {{ background: linear-gradient(315deg, #091236 0%, #1e215a 35%, #3a1c71 70%, #0f0c29 100%); }}
-    
-    /* Yan Menü Tasarımı */
     [data-testid="stSidebar"] {{ background-color: rgba(10, 10, 30, 0.9) !important; border-right: 1px solid #6a11cb; }}
-    
-    /* Sohbet Balonları */
-    [data-testid="stChatMessageContent"] p {{ color: #f0f0f0 !important; font-size: 1.1rem; }}
-    
-    /* Kullanıcı Mesajı Sağa Yasla */
-    div[data-testid="stChatMessage"]:has(span:contains("user")) {{
-        flex-direction: row-reverse !important;
-        background-color: transparent !important;
-    }}
-    div[data-testid="stChatMessage"]:has(span:contains("user")) [data-testid="stChatMessageContent"] {{
-        background-color: rgba(106, 17, 203, 0.4) !important;
-        border-radius: 20px 0px 20px 20px !important;
-        text-align: right !important;
-        margin-left: auto !important;
-    }}
+    [data-testid="stChatMessageContent"] p {{ color: #f0f0f0 !important; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# OTURUM VE HAFIZA YÖNETİMİ
+# GOOGLE LOGIN TAKLİDİ VE SESSION
 # ==============================
-if "session_id" not in st.session_state:
-    st.session_state.session_id = str(uuid.uuid4())
+# Gerçek Google Login için Google Cloud'dan Client ID alman lazım. 
+# Şimdilik sistemin çalışması için bir "Giriş" alanı yapalım.
+if "user_email" not in st.session_state:
+    st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI - GİRİŞ</h1>', unsafe_allow_html=True)
+    email = st.text_input("Google E-posta Adresinizle Giriş Yapın:")
+    if st.button("Google ile Devam Et"):
+        st.session_state.user_email = email
+        st.rerun()
+    st.stop() # Giriş yapmadan aşağıyı gösterme
 
+# Sohbet Geçmişini Hafızada Tut
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # ==============================
-# SIDEBAR: SOHBET GEÇMİŞİ
+# SIDEBAR
 # ==============================
 with st.sidebar:
     st.image(LOGO_URL, width=60)
-    st.title("Sohbetlerim")
-    
-    if st.button("➕ Yeni Sohbet", use_container_width=True):
-        st.session_state.session_id = str(uuid.uuid4())
+    st.write(f"Hoş geldin, **{st.session_state.user_email}**")
+    if st.button("➕ Yeni Sohbet"):
         st.session_state.chat_history = []
         st.rerun()
     
     st.write("---")
-    # Burada normalde Supabase'den gelen eski başlıklar listelenecek
-    st.info("Sohbetlerin otomatik kaydediliyor.")
+    st.subheader("Eski Sohbetlerin")
+    # Burada Supabase'den o kullanıcıya ait eski başlıkları çekebiliriz.
 
 # ==============================
-# ANA EKRAN & CHAT
+# CHAT EKRANI
 # ==============================
-st.markdown('<h1 style="text-align:center; color:white; font-size:3rem;">SCRIBER AI</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI</h1>', unsafe_allow_html=True)
 
 client = OpenAI(
     base_url=f"{NGROK_URL}/v1", 
@@ -82,27 +69,24 @@ client = OpenAI(
     default_headers={"ngrok-skip-browser-warning": "true"}
 )
 
-# Mesajları Görüntüle
+# Mesajları Göster
 for msg in st.session_state.chat_history:
-    avatar = LOGO_URL if msg["role"] == "assistant" else None
-    with st.chat_message(msg["role"], avatar=avatar):
+    with st.chat_message(msg["role"], avatar=LOGO_URL if msg["role"]=="assistant" else None):
         st.markdown(msg["content"])
 
-# Kullanıcı Girişi
-if prompt := st.chat_input("Scriber'a bir şeyler sor..."):
-    # Mesajı ekrana ve hafızaya ekle
+# Giriş ve Kayıt
+if prompt := st.chat_input("Mesajını yaz..."):
     st.session_state.chat_history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Yapay Zeka Yanıtı
     with st.chat_message("assistant", avatar=LOGO_URL):
         placeholder = st.empty()
         full_response = ""
         try:
             response = client.chat.completions.create(
                 model="llama3-turkish",
-                messages=[{"role": "system", "content": "Sen Scriber'sın. Yusuf Alp senin kurucun."}] + st.session_state.chat_history,
+                messages=st.session_state.chat_history,
                 stream=True
             )
             for chunk in response:
@@ -113,20 +97,13 @@ if prompt := st.chat_input("Scriber'a bir şeyler sor..."):
             placeholder.markdown(full_response)
             st.session_state.chat_history.append({"role": "assistant", "content": full_response})
             
-            # --- VERİTABANINA KAYIT (SUPABASE) ---
-            # Burada her mesajı Supabase 'messages' tablosuna gönderiyoruz
+            # SUPABASE KAYIT (session_id hatası burada giderildi)
             supabase.table("messages").insert({
-                "session_id": st.session_id,
+                "user_email": st.session_state.user_email,
                 "role": "user",
-                "content": prompt
-            }).execute()
-            
-            supabase.table("messages").insert({
-                "session_id": st.session_id,
-                "role": "assistant",
-                "content": full_response
+                "content": prompt,
+                "chat_title": prompt[:20] # İlk 20 harf başlık olsun
             }).execute()
 
         except Exception as e:
-            st.error(f"Bağlantı Hatası: {e}")
-
+            st.error(f"Hata: {e}")
