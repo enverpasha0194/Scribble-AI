@@ -4,204 +4,171 @@ from supabase import create_client, Client
 import uuid
 
 # ==============================
-# 🔑 AYARLAR
+# 🔑 VERDİĞİN ANAHTARLARLA AYARLAR
 # ==============================
 SUPABASE_URL = "https://rhenrzjfkiefhzfkkwgv.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoZW5yempma2llZmh6Zmtrd2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNzY3MTMsImV4cCI6MjA4MTY1MjcxM30.gwjvIT5M8PyP9SBysXImyNblPm6XNwJTeZAayUeVCxU"
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
-try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-except Exception as e:
-    st.error(f"Supabase bağlantı hatası: {e}")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="wide", initial_sidebar_state="expanded")
 
 # ==============================
-# CSS: BEYAZ ŞERİT İMHASI VE WAVE FİX
+# CSS: BEYAZ ŞERİT VE GÖRSEL DÜZENLEME
 # ==============================
 st.markdown(f"""
 <style>
-    /* 1. WAVE ANIMASYONLU ARKA PLAN */
-    .stApp, [data-testid="stAppViewContainer"] {{
-        background: linear-gradient(-45deg, #091236, #1e215a, #3a1c71, #0f0c29);
-        background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
-        color: white !important;
-    }}
+    #MainMenu, footer, header {{visibility: hidden;}}
+    .stDeployButton {{display:none;}}
     
-    @keyframes gradient {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
+    /* ARKA PLAN */
+    .stApp {{
+        background: linear-gradient(315deg, #091236 0%, #1e215a 35%, #3a1c71 70%, #0f0c29 100%);
     }}
 
-    /* 2. SIDEBAR (YAN MENÜ) ZORLAMA */
-    section[data-testid="stSidebar"] {{
-        background-color: rgba(5, 5, 20, 0.95) !important;
-        border-right: 2px solid #6a11cb !important;
-        visibility: visible !important;
-        display: block !important;
-    }}
-
-    /* 3. BEYAZ ŞERİT İMHASI (Senin attığın tüm sınıflar burada) */
-    div[data-testid="stBottomBlockContainer"],
-    .st-emotion-cache-1y34ygi,
-    .e4man117,
-    .st-emotion-cache-tn0cau,
-    .ek2vi383,
-    .st-emotion-cache-1vo6xi6,
-    .ek2vi381,
-    .st-emotion-cache-1eeryuo,
-    .eyzqfg10,
-    .st-emotion-cache-1x9r0fo,
-    .eyzqfg11,
-    .st-emotion-cache-1ng8ehu,
-    .eyzqfg15,
-    .st-emotion-cache-1htkme1,
-    .eyzqfg16 {{
-        background: transparent !important;
+    /* BEYAZ ŞERİDİ ATOMUNA AYIRAN KOD */
+    [data-testid="stBottomBlockContainer"], 
+    .st-emotion-cache-1y34ygi, 
+    .st-emotion-cache-6shykm, 
+    .st-emotion-cache-128upt6 {{
         background-color: transparent !important;
         background-image: none !important;
         border: none !important;
         box-shadow: none !important;
     }}
 
-    /* 4. YAZILAR VE INPUT ALANI */
-    #MainMenu, footer, header {{visibility: hidden;}}
-    p, span, label, h1, h2, h3 {{ color: #ffffff !important; }}
-    
+    /* YAN MENÜ (SIDEBAR) ZORUNLU GÖRÜNÜM */
+    [data-testid="stSidebar"] {{
+        background-color: rgba(5, 5, 20, 0.98) !important;
+        border-right: 2px solid #6a11cb !important;
+        min-width: 250px !important;
+    }}
+
+    /* SCRIBER YAZILARI (Parlak Beyaz - image_e7c16a.png hatası çözümü) */
+    [data-testid="stChatMessageContent"] p {{
+        color: #ffffff !important;
+        font-size: 1.15rem !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }}
+
+    /* KULLANICI MESAJI (Sağa Yasla & İkon Sifirla) */
+    div[data-testid="stChatMessage"]:has(span:contains("user")) {{
+        flex-direction: row-reverse !important;
+    }}
+    div[data-testid="stChatMessage"]:has(span:contains("user")) [data-testid="stChatMessageAvatar"] {{
+        display: none !important;
+    }}
+    div[data-testid="stChatMessage"]:has(span:contains("user")) [data-testid="stChatMessageContent"] {{
+        background-color: rgba(106, 17, 203, 0.5) !important;
+        border-radius: 20px 0px 20px 20px !important;
+        text-align: right !important;
+    }}
+
+    /* CHAT INPUT */
     div[data-testid="stChatInput"] {{
         background-color: rgba(15, 12, 41, 0.9) !important;
         border: 2px solid #6a11cb !important;
         border-radius: 25px !important;
     }}
-    
-    /* Sekme (Tabs) Tasarımı */
-    .stTabs [data-baseweb="tab-list"] {{ background-color: transparent !important; }}
-    .stTabs [data-baseweb="tab"] {{ color: white !important; border-bottom: 2px solid transparent; }}
-    .stTabs [data-baseweb="tab--active"] {{ border-bottom: 2px solid #6a11cb !important; }}
-    
-    /* Input kutusunun içindeki textarea rengi */
-    textarea[data-testid="stChatInputTextArea"] {{
-        color: white !important;
-    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# GİRİŞ / KAYIT EKRANI
+# KAYIT VE GİRİŞ
 # ==============================
 if "user" not in st.session_state:
-    st.markdown(f'<div style="text-align:center; padding-top: 50px;"><img src="{LOGO_URL}" width="100"></div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI</h1>', unsafe_allow_html=True)
-    
-    tab1, tab2 = st.tabs(["Giriş Yap", "Kayıt Ol"])
-    
-    with tab1:
-        with st.form("l_form"):
-            u = st.text_input("Kullanıcı Adı")
-            p = st.text_input("Şifre", type="password")
-            if st.form_submit_button("Giriş Yap", use_container_width=True):
-                res = supabase.table("scriber_users").select("*").eq("username", u).eq("password", p).execute()
-                if res.data:
-                    st.session_state.user = u
-                    st.rerun()
-                else:
-                    st.error("Kullanıcı adı veya şifre yanlış!")
-
-    with tab2:
-        with st.form("r_form"):
-            u_r = st.text_input("Kullanıcı Adı Belirle")
-            p_r = st.text_input("Şifre Belirle", type="password")
-            if st.form_submit_button("Hesap Oluştur", use_container_width=True):
-                if u_r and p_r:
-                    try:
-                        supabase.table("scriber_users").insert({"username": u_r, "password": p_r}).execute()
-                        st.success("Kayıt başarılı! Şimdi giriş yapabilirsin.")
-                    except:
-                        st.error("Bu kullanıcı adı zaten alınmış!")
-                else:
-                    st.warning("Lütfen alanları doldur kanka.")
+    st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI - KAYIT</h1>', unsafe_allow_html=True)
+    with st.container():
+        u_name = st.text_input("Kullanıcı Adınızı Girin:", placeholder="Örn: Yusuf Alp")
+        if st.button("Sohbete Başla"):
+            if u_name:
+                st.session_state.user = u_name
+                st.rerun()
+            else:
+                st.warning("Lütfen bir isim gir kanka!")
     st.stop()
 
-# ==============================
-# OTURUM VE SIDEBAR
-# ==============================
-if "chat_id" not in st.session_state: st.session_state.chat_id = str(uuid.uuid4())
-if "history" not in st.session_state: st.session_state.history = []
+# Oturum Ayarları
+if "current_chat_id" not in st.session_state:
+    st.session_state.current_chat_id = str(uuid.uuid4())
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "chats_dict" not in st.session_state:
+    st.session_state.chats_dict = {}
 
+# ==============================
+# SIDEBAR (YAN MENÜ)
+# ==============================
 with st.sidebar:
     st.image(LOGO_URL, width=80)
     st.markdown(f"### 👤 {st.session_state.user}")
     
     if st.button("➕ Yeni Sohbet", use_container_width=True):
-        st.session_state.chat_id = str(uuid.uuid4())
-        st.session_state.history = []
+        st.session_state.current_chat_id = str(uuid.uuid4())
+        st.session_state.chat_history = []
         st.rerun()
     
     st.write("---")
-    st.subheader("Sohbet Geçmişi")
-    
-    # Supabase'den geçmişi çek
-    try:
-        hist_data = supabase.table("messages").select("chat_id, chat_title").eq("username", st.session_state.user).execute()
-        unique_chats = {}
-        for d in hist_data.data:
-            if d['chat_id'] not in unique_chats:
-                unique_chats[d['chat_id']] = d['chat_title']
-        
-        for cid, title in unique_chats.items():
-            if st.button(title or "Adsız Sohbet", key=cid, use_container_width=True):
-                st.session_state.chat_id = cid
-                msgs = supabase.table("messages").select("*").eq("chat_id", cid).order("created_at").execute()
-                st.session_state.history = [{"role": m['role'], "content": m['content']} for m in msgs.data]
-                st.rerun()
-    except:
-        st.write("Henüz sohbet yok.")
+    st.subheader("Geçmiş Sohbetler")
+    # Otomatik oluşan başlıkları listele
+    for cid, title in st.session_state.chats_dict.items():
+        if st.button(title, key=cid, use_container_width=True):
+            st.session_state.current_chat_id = cid
+            # Geçmişi yükleme mantığı buraya gelecek
+            st.rerun()
 
 # ==============================
-# ANA CHAT EKRANI
+# CHAT MOTORU
 # ==============================
 st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI</h1>', unsafe_allow_html=True)
 
 client = OpenAI(base_url=f"{NGROK_URL}/v1", api_key="lm-studio")
 
-# Geçmiş Mesajları Bas
-for msg in st.session_state.history:
-    with st.chat_message(msg["role"], avatar=LOGO_URL if msg["role"]=="assistant" else None):
+# Mesajları Bas
+for msg in st.session_state.chat_history:
+    avatar = LOGO_URL if msg["role"] == "assistant" else None
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
-# Yeni Mesaj Girişi
-if prompt := st.chat_input("Scriber'a yaz..."):
-    sys_prompt = f"Adın Scriber. Karşındaki kişi {st.session_state.user}. Ona ismiyle hitap et."
-    
-    st.session_state.history.append({"role": "user", "content": prompt})
+if prompt := st.chat_input("Scriber'a mesaj gönder..."):
+    # Başlık oluştur (İlk mesaj ise)
+    if not st.session_state.chat_history:
+        st.session_state.chats_dict[st.session_state.current_chat_id] = prompt[:20] + "..."
+
+    st.session_state.chat_history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant", avatar=LOGO_URL):
         placeholder = st.empty()
-        full_res = ""
+        full_response = ""
+        # Yapay zekaya kullanıcıyı tanıtıyoruz
+        sys_msg = f"Senin adın Scriber. Karşındaki kullanıcının adı {st.session_state.user}. Ona ismiyle hitap et."
+        
         try:
             response = client.chat.completions.create(
                 model="llama3-turkish",
-                messages=[{"role": "system", "content": sys_prompt}] + st.session_state.history,
+                messages=[{"role": "system", "content": sys_msg}] + st.session_state.chat_history,
                 stream=True
             )
             for chunk in response:
                 if chunk.choices[0].delta.content:
-                    full_res += chunk.choices[0].delta.content
-                    placeholder.markdown(full_res + "▌")
-            placeholder.markdown(full_res)
-            st.session_state.history.append({"role": "assistant", "content": full_res})
+                    full_response += chunk.choices[0].delta.content
+                    placeholder.markdown(full_response + "▌")
+            
+            placeholder.markdown(full_response)
+            st.session_state.chat_history.append({"role": "assistant", "content": full_response})
+            
+            # SUPABASE KAYIT (Hatasız Sütun İsimleri)
+            supabase.table("messages").insert({
+                "username": st.session_state.user,
+                "role": "user",
+                "content": prompt,
+                "chat_id": st.session_state.current_chat_id,
+                "chat_title": st.session_state.chats_dict[st.session_state.current_chat_id]
+            }).execute()
 
-            # VERİTABANI KAYIT
-            chat_title = prompt[:20] + "..."
-            supabase.table("messages").insert([
-                {"username": st.session_state.user, "role": "user", "content": prompt, "chat_id": st.session_state.chat_id, "chat_title": chat_title},
-                {"username": st.session_state.user, "role": "assistant", "content": full_res, "chat_id": st.session_state.chat_id, "chat_title": chat_title}
-            ]).execute()
         except Exception as e:
-            st.error(f"Yapay zeka hatası: {e}")
+            st.error(f"Hata: {e}")
