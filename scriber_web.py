@@ -129,7 +129,7 @@ client = OpenAI(
 )
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": "Senin adın Scriber. Yusuf Alp senin baban."}]
+    st.session_state.messages = [{"role": "system", "content": "Senin adın Scriber, sen bir yapay zekasın ve Yusuf Alp senin kurucun, karşı tarafa kafa dengi ve eğlenceli biri gibi konuş."}]
 
 # Mesajları Yazdır
 for message in st.session_state.messages:
@@ -164,3 +164,4 @@ if prompt := st.chat_input("Scriber'e yaz..."):
             if uploaded_file: st.rerun()
         except Exception as e:
             st.error(f"Bağlantı Hatası: {e}")
+
