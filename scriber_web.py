@@ -84,7 +84,7 @@ if "user_id" not in st.session_state:
                 st.stop()
 
             user = res.data[0]
-            if not check_password(password, user["password_hash"]):
+            if not check_password(password, user["password"]):
                 st.error("Şifre yanlış")
                 st.stop()
 
@@ -114,7 +114,7 @@ if "user_id" not in st.session_state:
 
             supabase.table("users").insert({
                 "username": username,
-                "password_hash": hash_password(password)
+                "password": hash_password(password)
             }).execute()
 
             st.success("Kayıt tamam, giriş yap")
@@ -200,5 +200,6 @@ if prompt := st.chat_input("Scriber'a yaz..."):
         {"username":st.session_state.user,"role":"user","content":prompt,"chat_id":st.session_state.chat_id,"chat_title":title},
         {"username":st.session_state.user,"role":"assistant","content":full,"chat_id":st.session_state.chat_id,"chat_title":title}
     ]).execute()
+
 
 
