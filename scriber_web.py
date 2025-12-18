@@ -21,16 +21,16 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 DERHAL DÜZELTİLMİŞ CSS (WAVY + ŞEFFAF)
+# 🎨 DERHAL DÜZELTİLMİŞ CSS (WAVY + TAM ŞEFFAF)
 # ==============================
 st.markdown("""
 <style>
 
-/* === 1. WAVY HAREKETLİ ARKAPLAN (GERİ GELDİ) === */
+/* === 1. WAVY ARKAPLAN (GÜÇLENDİRİLDİ) === */
 .stApp {
-    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a);
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a) !important;
+    background-size: 400% 400% !important;
+    animation: gradient 15s ease infinite !important;
 }
 @keyframes gradient {
     0% { background-position: 0% 50%; }
@@ -38,66 +38,63 @@ st.markdown("""
     100% { background-position: 0% 50%; }
 }
 
-/* === 2. BEYAZ ŞERİTLERİ YOK ET (KESİN ÇÖZÜM) === */
-/* Bu blok tüm alt paneli ve içindeki inatçı beyazlıkları şeffaf yapar */
+/* === 2. BEYAZ ŞERİT VE ÇERÇEVE KATİLİ === */
+/* Streamlit'in alt panelindeki tüm katmanları (div'leri) şeffaf yapar */
 [data-testid="stBottom"], 
 [data-testid="stBottomBlockContainer"],
-header, 
+[data-testid="stElementContainer"],
 .st-emotion-cache-1p2n2i4, 
 .st-emotion-cache-128upt6, 
-.st-emotion-cache-1y34ygi {
+.st-emotion-cache-1y34ygi,
+.st-emotion-cache-k7rogd {
     background-color: transparent !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
 }
 
-/* === 3. CHAT INPUT ALANI (SADECE KUTU GÖRÜNSÜN) === */
-div[data-testid="stChatInput"] {
+/* Input'un etrafındaki o "garip" gölgeyi ve beyaz alanı temizler */
+.stChatInput {
     background-color: transparent !important;
     border: none !important;
-    padding-bottom: 20px !important;
 }
 
+/* === 3. CHAT INPUT KUTUSU (TAM OTURTULMUŞ) === */
 textarea[data-testid="stChatInputTextArea"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 2px solid #6a11cb !important;
-    border-radius: 15px !important;
+    border-radius: 25px !important; /* Daha oval bir görünüm için */
     color: white !important;
-    box-shadow: 0 0 10px rgba(106, 17, 203, 0.2) !important;
+    margin-bottom: 5px !important;
 }
 
-/* === 4. MESAJ BALONLARI VE YAZILAR === */
+/* Gönder butonunun arka planını ve rengini temizle */
+[data-testid="stChatInputSubmitButton"] {
+    background-color: transparent !important;
+    border: none !important;
+    color: #6a11cb !important;
+}
+
+/* === 4. SIDEBAR VE DİĞERLERİ === */
+section[data-testid="stSidebar"] {
+    background-color: rgba(5, 5, 20, 0.95) !important;
+    border-right: 1px solid #6a11cb !important;
+}
+
+/* Mesaj balonları */
 [data-testid="stChatMessage"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border-radius: 15px !important;
 }
 
-h1, h2, h3, p, span, label, div {
-    color: white !important;
-}
-
-/* === 5. SIDEBAR VE DİĞERLERİ === */
-section[data-testid="stSidebar"] {
-    background-color: rgba(5, 5, 20, 0.9) !important;
-    border-right: 1px solid #6a11cb !important;
-}
-
-/* Gönder butonunu beyazlıktan kurtar */
-button[data-testid="stChatInputSubmitButton"] {
-    background-color: transparent !important;
-    color: #6a11cb !important;
-}
-
-/* Footer ve diğer gereksiz Streamlit öğelerini gizle */
-footer {visibility: hidden;}
-#MainMenu {visibility: hidden;}
+/* Gereksiz her şeyi gizle */
+header, footer, #MainMenu {visibility: hidden !important;}
 
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔐 AUTH VE MANTIK (AYNI KALDI)
+# 🔐 AUTH MANTIĞI
 # ==============================
 def hash_password(pw: str) -> str:
     return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
