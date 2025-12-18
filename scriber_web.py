@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 GLOBAL CSS (GÜNCELLENMİŞ)
+# 🎨 GLOBAL CSS (BEYAZ ŞERİT KATİLİ)
 # ==============================
 st.markdown("""
 <style>
@@ -38,26 +38,23 @@ st.markdown("""
     100% { background-position: 0% 50%; }
 }
 
-/* === ALT BEYAZ ŞERİT VE GÖLGEYİ TAMAMEN KALDIR === */
-div[data-testid="stBottom"], 
-div[data-testid="stBottomBlockContainer"] {
+/* === ALTTAKİ TÜM BEYAZLIĞI VE GÖLGEYİ SİL === */
+[data-testid="stBottom"], 
+[data-testid="stBottomBlockContainer"],
+.st-emotion-cache-1p2n2i4, 
+.st-emotion-cache-128upt6,
+.st-emotion-cache-1y34ygi {
     background-color: transparent !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
 }
 
-/* Chat input kapsayıcısını şeffaf yap */
-.stChatInput {
-    background-color: transparent !important;
-}
+/* Chat input'un dışındaki o ekstra gri/beyaz alanı temizle */
+footer {display: none !important;}
+header {display: none !important;}
 
 /* === TEXT INPUT + PASSWORD === */
-div[data-testid="stTextInput"],
-div[data-testid="stPasswordInput"] {
-    background: transparent !important;
-}
-
 div[data-testid="stTextInput"] input,
 div[data-testid="stPasswordInput"] input {
     background-color: rgba(255,255,255,0.05) !important;
@@ -66,29 +63,22 @@ div[data-testid="stPasswordInput"] input {
     color: white !important;
 }
 
-/* placeholder */
-input::placeholder {
-    color: rgba(255,255,255,0.6) !important;
+/* === CHAT INPUT (SCRIBER'A YAZ KISMI) === */
+div[data-testid="stChatInput"] {
+    background-color: transparent !important;
 }
 
-/* === CHAT INPUT TEXTAREA === */
 textarea[data-testid="stChatInputTextArea"] {
-    background-color: rgba(255,255,255,0.07) !important;
+    background-color: rgba(255,255,255,0.05) !important;
     border: 2px solid #6a11cb !important;
     border-radius: 15px !important;
     color: white !important;
+    box-shadow: none !important;
 }
 
-/* === BUTONLAR === */
-button {
-    background-color: #393863 !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-}
-button:hover {
-    opacity: 0.9;
+/* Gönder butonunun arkasını temizle */
+div[data-testid="stChatInputSubmitButton"] {
+    background-color: transparent !important;
 }
 
 /* === SIDEBAR === */
@@ -97,19 +87,14 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #6a11cb !important;
 }
 
-/* === GENEL === */
-header, footer, #MainMenu { visibility: hidden; }
-h1,h2,h3,p,span,label { color: white !important; }
-input:focus, textarea:focus {
-    outline: none !important;
-    box-shadow: none !important;
-}
+/* Diğer Genel Ayarlar */
+h1, h2, h3, p, span, label { color: white !important; }
 
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔐 ŞİFRE FONKSİYONLARI
+# 🔐 ŞİFRE & AUTH
 # ==============================
 def hash_password(pw: str) -> str:
     return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
@@ -117,21 +102,16 @@ def hash_password(pw: str) -> str:
 def check_password(pw: str, hashed: str) -> bool:
     return bcrypt.checkpw(pw.encode(), hashed.encode())
 
-# ==============================
-# 🔐 AUTH MANTIĞI
-# ==============================
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 
 if "user" not in st.session_state:
     st.markdown("<h1 style='text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
     _, col, _ = st.columns([1,2,1])
-
     with col:
         if st.session_state.auth_mode == "login":
             u = st.text_input("Kullanıcı adı")
             p = st.text_input("Şifre", type="password")
-
             if st.button("Giriş Yap", use_container_width=True):
                 res = supabase.table("scriber_users").select("*").eq("username", u).execute()
                 if res.data and check_password(p, res.data[0]["password"]):
@@ -139,53 +119,32 @@ if "user" not in st.session_state:
                     st.rerun()
                 else:
                     st.error("Hatalı giriş")
-
             if st.button("Kayıt Ol"):
-                st.session_state.auth_mode = "register"
-                st.rerun()
+                st.session_state.auth_mode = "register"; st.rerun()
         else:
             u = st.text_input("Yeni kullanıcı adı")
             p1 = st.text_input("Şifre", type="password")
             p2 = st.text_input("Şifre tekrar", type="password")
-
             if st.button("Hesap Oluştur"):
                 if p1 == p2:
-                    supabase.table("scriber_users").insert({
-                        "username": u,
-                        "password": hash_password(p1)
-                    }).execute()
-                    st.session_state.auth_mode = "login"
-                    st.rerun()
-                else:
-                    st.error("Şifreler uyuşmuyor")
-
+                    supabase.table("scriber_users").insert({"username": u, "password": hash_password(p1)}).execute()
+                    st.session_state.auth_mode = "login"; st.rerun()
+                else: st.error("Şifreler uyuşmuyor")
     st.stop()
 
 # ==============================
-# 🧠 OTURUM YÖNETİMİ
+# 🧠 CHAT MANTIĞI
 # ==============================
-if "chat_id" not in st.session_state:
-    st.session_state.chat_id = str(uuid.uuid4())
-if "history" not in st.session_state:
-    st.session_state.history = []
+if "chat_id" not in st.session_state: st.session_state.chat_id = str(uuid.uuid4())
+if "history" not in st.session_state: st.session_state.history = []
 
-# ==============================
-# 🧭 SIDEBAR
-# ==============================
 with st.sidebar:
     st.image(LOGO_URL, width=100)
     st.write(f"👤 {st.session_state.user}")
-
     if st.button("➕ Yeni Sohbet", use_container_width=True):
-        st.session_state.chat_id = str(uuid.uuid4())
-        st.session_state.history = []
-        st.rerun()
+        st.session_state.history = []; st.rerun()
 
-# ==============================
-# 🤖 CHAT ARAYÜZÜ
-# ==============================
 st.markdown("<h1 style='text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
-
 client = OpenAI(base_url=f"{NGROK_URL}/v1", api_key="lm-studio")
 
 for msg in st.session_state.history:
@@ -194,13 +153,8 @@ for msg in st.session_state.history:
 
 if prompt := st.chat_input("Scriber'a yaz..."):
     st.session_state.history.append({"role":"user","content":prompt})
-
     with st.chat_message("assistant", avatar=LOGO_URL):
-        r = client.chat.completions.create(
-            model="llama3-turkish",
-            messages=st.session_state.history
-        )
+        r = client.chat.completions.create(model="llama3-turkish", messages=st.session_state.history)
         reply = r.choices[0].message.content
         st.markdown(reply)
-
     st.session_state.history.append({"role":"assistant","content":reply})
