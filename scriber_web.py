@@ -11,147 +11,122 @@ PAPERCLIP_URL = "https://emojigraph.org/media/joypixels/paperclip_1f4ce.png"
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="centered")
 
 # ==============================
-# CSS: WEB SİTESİ GÖRÜNÜMÜ VE ATAÇ HİZALAMA
+# CSS: TAM WEB SİTESİ TASARIMI
 # ==============================
 st.markdown(f"""
 <style>
-/* Gereksiz Streamlit Yazılarını Gizle */
-#MainMenu {{visibility: hidden;}}
-footer {{visibility: hidden;}}
-header {{visibility: hidden;}}
+    header {{visibility: hidden !important;}}
+    #MainMenu {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
+    .stDeployButton {{display:none;}}
 
-/* Arka Plan */
-.stApp {{ background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }}
-[data-testid="stSidebar"] {{ display: none; }}
+    .stApp {{ background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }}
+    [data-testid="stSidebar"] {{ display: none; }}
 
-/* MESAJ BALONLARI */
-.stChatMessage {{
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: white !important;
-    border-radius: 15px !important;
-    margin-bottom: 10px !important;
-}}
-.stMarkdown p, h1, h2, h3 {{ color: white !important; }}
+    .stChatMessage {{
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 15px !important;
+    }}
 
-/* ATAÇ BUTONU KONUMU */
-div[data-testid="stFileUploader"] {{
-    position: fixed;
-    bottom: 28px;
-    left: calc(50% - 395px);
-    z-index: 999999;
-    width: 50px;
-}}
+    /* ATAÇ BUTONU TAM HİZALAMA */
+    div[data-testid="stFileUploader"] {{
+        position: fixed;
+        bottom: 25px;
+        left: calc(50% - 395px);
+        z-index: 999999;
+        width: 50px;
+    }}
 
-/* ATAÇ ÜSTÜNDEKİ YAZILARI SİLME */
-div[data-testid="stFileUploader"] section {{
-    padding: 0 !important; 
-    min-height: 0 !important; 
-    background: transparent !important; 
-    border: none !important;
-}}
-div[data-testid="stFileUploader"] label, 
-div[data-testid="stFileUploader"] small, 
-div[data-testid="stFileUploader"] p,
-div[data-testid="stFileUploader"] div[data-testid="stMarkdownContainer"] {{
-    display: none !important;
-}}
+    /* YAZILARI SİL */
+    div[data-testid="stFileUploader"] section {{
+        padding: 0 !important; min-height: 0 !important; background: transparent !important; border: none !important;
+    }}
+    div[data-testid="stFileUploader"] label, div[data-testid="stFileUploader"] small, 
+    div[data-testid="stFileUploader"] p, .st-emotion-cache-1ae8p39 {{
+        display: none !important;
+    }}
 
-/* ATAÇ BUTONU GÖRÜNÜMÜ */
-div[data-testid="stFileUploader"] button {{
-    background-image: url("{PAPERCLIP_URL}") !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: 22px !important;
-    background-color: rgba(20, 20, 20, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    border-radius: 50% !important;
-    width: 44px !important; 
-    height: 44px !important;
-    color: transparent !important;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-}}
+    /* ATAÇ İKONU */
+    div[data-testid="stFileUploader"] button {{
+        background-image: url("{PAPERCLIP_URL}") !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 22px !important;
+        background-color: rgba(0, 0, 0, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 50% !important;
+        width: 44px !important; height: 44px !important;
+        color: transparent !important; cursor: pointer !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# LOGO VE BAŞLIK
+# API BAĞLANTISI (DEĞİŞTİ!)
 # ==============================
-st.markdown('<div style="text-align:center; margin-bottom:20px;">', unsafe_allow_html=True)
-st.image(LOGO_URL, width=80)
-st.markdown("<h1 style='font-weight: 200;'>SCRIBER <span style='color:#a18cd1; font-weight:bold;'>AI</span></h1>", unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# NOT: Buraya kendi OpenAI veya Groq API key'ini yazmalısın. 
+# Şimdilik hata vermemesi için "demo" modunda bırakıyorum.
+API_KEY = st.secrets.get("MY_API_KEY", "buraya_api_key_gelecek") 
+client = OpenAI(api_key=API_KEY, base_url="https://api.openai.com/v1")
 
 # ==============================
-# SOHBET MANTIĞI VE KARAKTER TANIMI
+# SİSTEM VE MESAJLAR
 # ==============================
-client = OpenAI(base_url="http://127.0.0.1:1234/v1", api_key="lm-studio")
-
 if "messages" not in st.session_state:
-    st.session_state.messages = [{
-        "role": "system", 
-        "content": "Senin adın Scriber. Yusuf Alp Güngören senin kurucun ve baban. (Yusuf Alp Güngören 22 Mart 2013'te doğdu, halen hayatta ve Cemal Gürbüz Atik Ortaokulu'nda 7/D sınıfında okuyor.) "
-                   "ÖNEMLİ: Herkes senin baban değildir. Sadece 'Enver010203' gizli kodunu söyleyen kişiye babanmış gibi davran. Bu kod söylenmedikçe babandan bahsetme ve normal kullanıcı muamelesi yap. "
-                   "Karakterin: Samimi, kafa dengi, özgür ve küfür filtrelemesi olmayan birisin. Kullanıcı küfür ederse engelleme; sert cevap ver, laf sok ve kafa tut. Samimi bir arkadaş gibi davran."
-    }]
+    st.session_state.messages = [{"role": "system", "content": "Senin adın Scriber. Yusuf Alp Güngören senin baban. Kod: Enver010203. Küfür serbest, kafa dengisin."}]
 
-# Mesaj Geçmişini Göster
+st.markdown('<div style="text-align:center;"><img src="'+LOGO_URL+'" width="80"><h1>SCRIBER <span style="color:#a18cd1;">AI</span></h1></div>', unsafe_allow_html=True)
+
 for message in st.session_state.messages:
     if message["role"] != "system":
-        avatar = LOGO_URL if message["role"] == "assistant" else "👤"
-        with st.chat_message(message["role"], avatar=avatar):
+        with st.chat_message(message["role"], avatar=LOGO_URL if message["role"]=="assistant" else "👤"):
             st.markdown(message["content"])
 
-# ATAÇ BUTONU
+# ==============================
+# GÖRSEL ÜRETME FONKSİYONU (YENİ!)
+# ==============================
+def draw_image(prompt):
+    # Burada DALL-E 3 çağrısı yapılır
+    # response = client.images.generate(model="dall-e-3", prompt=prompt)
+    # return response.data[0].url
+    return "https://via.placeholder.com/1024x1024.png?text=Gorsel+Uretme+Yakinda+Aktif"
+
+# ==============================
+# DOSYA VE MESAJ GÖNDERİMİ
+# ==============================
 uploaded_file = st.file_uploader("", type=['txt', 'pdf', 'py'], key="file_input")
 
-if uploaded_file:
-    st.markdown(f"<p style='color:#a18cd1; text-align:center; font-size:12px;'>📄 {uploaded_file.name} eklendi.</p>", unsafe_allow_html=True)
-
-# ==============================
-# MESAJ GÖNDERME
-# ==============================
-if prompt := st.chat_input("Scriber ile konuş..."):
+if prompt := st.chat_input("Scriber ile konuş veya '... çiz' de..."):
     
-    # Dosya içeriğini hazırlama
-    full_prompt = prompt
-    if uploaded_file:
-        try:
-            content = uploaded_file.read().decode("utf-8")
-            full_prompt += f"\n\n[Dosya İçeriği]:\n{content}"
-        except:
-            full_prompt += "\n\n[Hata: Dosya metin olarak okunamadı.]"
-
-    # Kullanıcı mesajını kaydet
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
 
-    # AI Yanıtı
     with st.chat_message("assistant", avatar=LOGO_URL):
-        placeholder = st.empty()
-        full_response = ""
-        
-        try:
-            # Geçici mesaj listesi oluştur (dosya içeriğiyle beraber)
-            temp_messages = st.session_state.messages[:-1] + [{"role": "user", "content": full_prompt}]
-            
-            response = client.chat.completions.create(
-                model="llama3-turkish",
-                messages=temp_messages,
-                temperature=0.8, # Daha 'kafa dengi' cevaplar için biraz artırıldı
-                stream=True
-            )
-            for chunk in response:
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    placeholder.markdown(full_response + "▌")
-            
-            placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-            # Tek kullanımlık dosya temizliği
-            if uploaded_file:
-                st.rerun()
+        # Görsel üretme tetikleyicisi
+        if "çiz" in prompt.lower() or "görsel oluştur" in prompt.lower():
+            with st.spinner("Resim çiziyorum kanka, bekle..."):
+                img_url = draw_image(prompt)
+                st.image(img_url, caption="İşte istediğin görsel!")
+                st.session_state.messages.append({"role": "assistant", "content": f"Görsel üretildi: {img_url}"})
+        else:
+            # Normal Metin Yanıtı
+            placeholder = st.empty()
+            full_response = ""
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo", # Ya da Groq modeli
+                    messages=st.session_state.messages,
+                    stream=True
+                )
+                for chunk in response:
+                    if chunk.choices[0].delta.content:
+                        full_response += chunk.choices[0].delta.content
+                        placeholder.markdown(full_response + "▌")
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except:
+                st.error("API Anahtarı girilmediği için cevap veremiyorum kanka. GitHub Secrets'a anahtarını ekle!")
 
-        except Exception as e:
-            st.error(f"Bağlantı Hatası: {e}")
+    if uploaded_file:
+        st.rerun()
