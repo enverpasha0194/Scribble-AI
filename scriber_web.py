@@ -17,86 +17,58 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 st.set_page_config(
     page_title="SCRIBER AI",
     page_icon=LOGO_URL,
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
-
-# ==============================
-# 🎨 CSS (ARKAPLAN + SIDEBAR)
-# ==============================
-st.markdown("""
-<style>
-#MainMenu, footer, header {visibility: hidden;}
-.stDeployButton {display:none;}
-
-.stApp {
-    background: linear-gradient(315deg,#091236,#1e215a,#3a1c71,#0f0c29);
-}
-
-section[data-testid="stSidebar"] {
-    background-color: rgba(10,10,35,0.98);
-    border-right: 2px solid #6a11cb;
-    width: 300px !important;
-}
-
-[data-testid="stChatMessageContent"] p {
-    color: white !important;
-    font-size: 1.15rem;
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
-}
-
-div[data-testid="stChatMessage"]:has(span:contains("user")) {
-    flex-direction: row-reverse !important;
-}
-div[data-testid="stChatMessage"]:has(span:contains("user")) 
-[data-testid="stChatMessageAvatar"] {
-    display:none !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # ==============================
 # 🔐 ŞİFRE
 # ==============================
-def hash_password(pw):
+def hash_password(pw: str) -> str:
     return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
 
-def check_password(pw, hashed):
-    return bcrypt.checkpw(pw.encode(), hashed.encode())
+def check_password(pw: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(pw.encode(), hashed.encode())
+    except:
+        return False
 
 # ==============================
-# 🔐 AUTH
+# 🔐 AUTH STATE
 # ==============================
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
 
-if "user_id" not in st.session_state:
+if "user" not in st.session_state:
+
     st.markdown("<h1 style='color:white;text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
 
+    # ---------- LOGIN ----------
     if st.session_state.auth_mode == "login":
         username = st.text_input("Kullanıcı adı")
         password = st.text_input("Şifre", type="password")
 
         if st.button("Giriş Yap"):
             res = supabase.table("scriber_users").select("*").eq("username", username).execute()
+
             if not res.data:
                 st.error("Kullanıcı yok")
                 st.stop()
 
             user = res.data[0]
+
             if not check_password(password, user["password"]):
                 st.error("Şifre yanlış")
                 st.stop()
 
-            st.session_state.user_id = user["id"]
             st.session_state.user = user["username"]
+            st.session_state.user_id = user["id"]
             st.rerun()
 
-        st.markdown("Hesabın yok mu?")
         if st.button("Kayıt Ol"):
             st.session_state.auth_mode = "register"
             st.rerun()
 
+    # ---------- REGISTER ----------
     else:
         username = st.text_input("Kullanıcı adı")
         password = st.text_input("Şifre", type="password")
@@ -107,12 +79,12 @@ if "user_id" not in st.session_state:
                 st.error("Şifreler uyuşmuyor")
                 st.stop()
 
-            exists = supabase.table("users").select("id").eq("username", username).execute()
+            exists = supabase.table("scriber_users").select("id").eq("username", username).execute()
             if exists.data:
                 st.error("Bu kullanıcı adı alınmış")
                 st.stop()
 
-            supabase.table("users").insert({
+            supabase.table("scriber_users").insert({
                 "username": username,
                 "password": hash_password(password)
             }).execute()
@@ -128,6 +100,7 @@ if "user_id" not in st.session_state:
 # ==============================
 if "chat_id" not in st.session_state:
     st.session_state.chat_id = str(uuid.uuid4())
+
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -138,68 +111,84 @@ with st.sidebar:
     st.image(LOGO_URL, width=80)
     st.write(f"👤 **{st.session_state.user}**")
 
-    if st.button("➕ Yeni Sohbet", use_container_width=True):
+    if st.button("➕ Yeni Sohbet"):
         st.session_state.chat_id = str(uuid.uuid4())
         st.session_state.history = []
         st.rerun()
 
     st.write("---")
+
     chats = supabase.table("messages") \
         .select("chat_id, chat_title") \
         .eq("username", st.session_state.user) \
         .execute()
 
-    titles = {c["chat_id"]: c["chat_title"] for c in chats.data if c["chat_title"]}
-
-    for cid, title in titles.items():
-        if st.button(title, key=cid, use_container_width=True):
-            st.session_state.chat_id = cid
-            msgs = supabase.table("messages") \
-                .select("role,content") \
-                .eq("chat_id", cid) \
-                .order("created_at") \
-                .execute()
-            st.session_state.history = msgs.data
-            st.rerun()
+    seen = set()
+    for c in chats.data:
+        if c["chat_id"] not in seen and c["chat_title"]:
+            seen.add(c["chat_id"])
+            if st.button(c["chat_title"], key=c["chat_id"]):
+                msgs = supabase.table("messages") \
+                    .select("role,content") \
+                    .eq("chat_id", c["chat_id"]) \
+                    .order("created_at") \
+                    .execute()
+                st.session_state.chat_id = c["chat_id"]
+                st.session_state.history = msgs.data
+                st.rerun()
 
 # ==============================
 # 🤖 CHAT
 # ==============================
-st.markdown('<h1 style="text-align:center; color:white;">SCRIBER AI</h1>', unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;color:white'>SCRIBER AI</h1>", unsafe_allow_html=True)
 
-client = OpenAI(base_url=f"{NGROK_URL}/v1", api_key="lm-studio")
+client = OpenAI(
+    base_url=f"{NGROK_URL}/v1",
+    api_key="lm-studio"
+)
 
 for msg in st.session_state.history:
-    with st.chat_message(msg["role"], avatar=LOGO_URL if msg["role"]=="assistant" else None):
+    with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
 if prompt := st.chat_input("Scriber'a yaz..."):
-    sys_msg = f"Senin adın Scriber. Karşındaki kişi {st.session_state.user}. Samimi konuş."
 
     st.session_state.history.append({"role":"user","content":prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    with st.chat_message("assistant", avatar=LOGO_URL):
+    with st.chat_message("assistant"):
         placeholder = st.empty()
         full = ""
-        res = client.chat.completions.create(
+
+        stream = client.chat.completions.create(
             model="llama3-turkish",
-            messages=[{"role":"system","content":sys_msg}] + st.session_state.history,
+            messages=st.session_state.history,
             stream=True
         )
-        for c in res:
-            if c.choices[0].delta.content:
-                full += c.choices[0].delta.content
-                placeholder.markdown(full+"▌")
+
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                full += chunk.choices[0].delta.content
+                placeholder.markdown(full + "▌")
+
         placeholder.markdown(full)
         st.session_state.history.append({"role":"assistant","content":full})
 
-    title = prompt[:20] + "..."
-    supabase.table("messages").insert([
-        {"username":st.session_state.user,"role":"user","content":prompt,"chat_id":st.session_state.chat_id,"chat_title":title},
-        {"username":st.session_state.user,"role":"assistant","content":full,"chat_id":st.session_state.chat_id,"chat_title":title}
-    ]).execute()
+    title = prompt[:30] + "..."
 
+    supabase.table("messages").insert({
+        "username": st.session_state.user,
+        "role": "user",
+        "content": prompt,
+        "chat_id": st.session_state.chat_id,
+        "chat_title": title
+    }).execute()
 
-
+    supabase.table("messages").insert({
+        "username": st.session_state.user,
+        "role": "assistant",
+        "content": full,
+        "chat_id": st.session_state.chat_id,
+        "chat_title": title
+    }).execute()
