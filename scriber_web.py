@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 GLOBAL CSS (HER ŞEY)
+# 🎨 GLOBAL CSS (GÜNCELLENMİŞ)
 # ==============================
 st.markdown("""
 <style>
@@ -38,11 +38,18 @@ st.markdown("""
     100% { background-position: 0% 50%; }
 }
 
-/* === ALT BEYAZ ŞERİT YOK === */
+/* === ALT BEYAZ ŞERİT VE GÖLGEYİ TAMAMEN KALDIR === */
+div[data-testid="stBottom"], 
 div[data-testid="stBottomBlockContainer"] {
+    background-color: transparent !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+}
+
+/* Chat input kapsayıcısını şeffaf yap */
+.stChatInput {
+    background-color: transparent !important;
 }
 
 /* === TEXT INPUT + PASSWORD === */
@@ -64,14 +71,9 @@ input::placeholder {
     color: rgba(255,255,255,0.6) !important;
 }
 
-/* === CHAT INPUT === */
-div[data-testid="stChatInput"] {
-    background: transparent !important;
-    border: none !important;
-}
-
+/* === CHAT INPUT TEXTAREA === */
 textarea[data-testid="stChatInputTextArea"] {
-    background-color: rgba(255,255,255,0.05) !important;
+    background-color: rgba(255,255,255,0.07) !important;
     border: 2px solid #6a11cb !important;
     border-radius: 15px !important;
     color: white !important;
@@ -107,7 +109,7 @@ input:focus, textarea:focus {
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔐 ŞİFRE
+# 🔐 ŞİFRE FONKSİYONLARI
 # ==============================
 def hash_password(pw: str) -> str:
     return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
@@ -116,7 +118,7 @@ def check_password(pw: str, hashed: str) -> bool:
     return bcrypt.checkpw(pw.encode(), hashed.encode())
 
 # ==============================
-# 🔐 AUTH
+# 🔐 AUTH MANTIĞI
 # ==============================
 if "auth_mode" not in st.session_state:
     st.session_state.auth_mode = "login"
@@ -160,7 +162,7 @@ if "user" not in st.session_state:
     st.stop()
 
 # ==============================
-# 🧠 OTURUM
+# 🧠 OTURUM YÖNETİMİ
 # ==============================
 if "chat_id" not in st.session_state:
     st.session_state.chat_id = str(uuid.uuid4())
@@ -180,7 +182,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================
-# 🤖 CHAT
+# 🤖 CHAT ARAYÜZÜ
 # ==============================
 st.markdown("<h1 style='text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
 
@@ -202,4 +204,3 @@ if prompt := st.chat_input("Scriber'a yaz..."):
         st.markdown(reply)
 
     st.session_state.history.append({"role":"assistant","content":reply})
-
