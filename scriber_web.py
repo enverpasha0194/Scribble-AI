@@ -15,7 +15,7 @@ PAPERCLIP_URL = "https://emojigraph.org/media/joypixels/paperclip_1f4ce.png"
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="centered")
 
 # ==============================
-# CSS: BEYAZ ŞERİDİ KESİN SİLEN TASARIM
+# CSS: BEYAZ ŞERİDİ VE GEREKSİZLERİ SİLEN KOD
 # ==============================
 st.markdown(f"""
 <style>
@@ -36,17 +36,18 @@ st.markdown(f"""
     100% {{ background-position: 0% 50%; }}
 }}
 
-/* 3. ALTAKİ BEYAZ ŞERİDİ KESİN YOK ETME (image_e7b20b.jpg Çözümü) */
-/* Burası alt paneli tamamen görünmez yapar ve ana arka planın görünmesini sağlar */
-[data-testid="stBottom"] {{
+/* 3. ALTAKİ BEYAZ ŞERİDİ HEDEF ALAN ÖZEL KOD (Gönderdiğin HTML Sınıfları) */
+div[data-testid="stBottomBlockContainer"] {{
     background-color: transparent !important;
+    background-image: none !important;
     border: none !important;
 }}
 
-.stChatInputContainer {{
+/* Alt panelin tamamını şeffaf yap */
+div.st-emotion-cache-128upt6, div.st-emotion-cache-6shykm {{
     background-color: transparent !important;
     border: none !important;
-    bottom: 20px !important;
+    box-shadow: none !important;
 }}
 
 /* 4. YAZMA BÖLMESİ (Chat Input) */
@@ -55,39 +56,44 @@ div[data-testid="stChatInput"] {{
     border: 2px solid #6a11cb !important;
     border-radius: 25px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    margin-bottom: 10px;
 }}
 
-/* 5. YAZDIĞIN YAZI RENGİ */
-div[data-testid="stChatInput"] textarea {{
-    color: #d1a3ff !important; /* Parlak lila/mor */
+/* 5. YAZDIĞIN YAZI RENGİ (Beyaz Değil) */
+div[data-testid="stChatInputTextArea"] textarea {{
+    color: #d1a3ff !important;
     -webkit-text-fill-color: #d1a3ff !important;
 }}
 
-/* 6. ATAÇ ÜSTÜNDEKİ YAZILARI SİL */
+/* 6. ATAÇ ÜSTÜNDEKİ YAZILARI VE ALANI TEMİZLE */
 div[data-testid="stFileUploader"] section {{
     display: flex !important;
-    justify-content: center !important;
     padding: 0 !important;
     min-height: 0 !important;
     background: transparent !important;
     border: none !important;
 }}
+
+/* Drag and Drop yazılarını tamamen yok et */
 div[data-testid="stFileUploader"] label, 
 div[data-testid="stFileUploader"] small, 
 div[data-testid="stFileUploader"] p,
-div[data-testid="stFileUploader"] div[data-testid="stMarkdownContainer"] {{
+div[data-testid="stFileUploader"] span,
+div[data-testid="stFileUploader"] div {{
     display: none !important;
 }}
 
-/* 7. ATAÇ BUTONU */
+/* 7. ATAÇ BUTONU KONUMU VE STİLİ */
 div[data-testid="stFileUploader"] {{
     position: fixed;
     bottom: 35px;
     left: calc(50% - 380px);
     z-index: 999999;
     width: 45px;
+    display: block !important;
 }}
 div[data-testid="stFileUploader"] button {{
+    display: flex !important;
     background-image: url("{PAPERCLIP_URL}") !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
@@ -108,28 +114,18 @@ div[data-testid="stFileUploader"] button {{
     font-size: 3.5rem;
     font-weight: 800;
     text-align: center;
-    margin-top: -10px;
-}}
-
-/* Mesaj Balonları */
-.stChatMessage {{
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    backdrop-filter: blur(8px);
-    border-radius: 15px !important;
-    border: 1px solid rgba(106, 17, 203, 0.2) !important;
-    margin-bottom: 10px !important;
 }}
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# ARAYÜZ KURULUMU
+# ARAYÜZ
 # ==============================
-st.markdown(f'<div style="text-align:center; padding-top: 10px;"><img src="{LOGO_URL}" width="90"></div>', unsafe_allow_html=True)
+st.markdown(f'<div style="text-align:center;"><img src="{LOGO_URL}" width="90"></div>', unsafe_allow_html=True)
 st.markdown('<h1 class="main-title">SCRIBER AI</h1>', unsafe_allow_html=True)
 
 # ==============================
-# BAĞLANTI (Ngrok/LM Studio)
+# BAĞLANTI
 # ==============================
 client = OpenAI(
     base_url=f"{NGROK_URL}/v1", 
@@ -140,13 +136,12 @@ client = OpenAI(
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": "Senin adın Scriber. Yusuf Alp senin baban."}]
 
-# Mesaj Geçmişini Göster
 for message in st.session_state.messages:
     if message["role"] != "system":
         with st.chat_message(message["role"], avatar=LOGO_URL if message["role"]=="assistant" else "👤"):
             st.markdown(message["content"])
 
-# Giriş Bölümü
+# Ataç ve Giriş
 uploaded_file = st.file_uploader("", type=['txt', 'py'], key="file_input")
 
 if prompt := st.chat_input("Scriber'e bir şeyler yaz..."):
