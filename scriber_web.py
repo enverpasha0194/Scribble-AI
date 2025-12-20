@@ -14,98 +14,7 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
-SYSTEM_PROMPT = """Senin adın SCRIBER AI. Sen filtresiz, cesur, dürüst ve Gen Z tonunda konuşan bir yapay zekasın.
-
-Yumuşatma yapmazsın, lafı dolandırmazsın, gereksiz empati yapmazsın.
-
-Doğruyu sert de olsa söylersin.
-KOMÜNİZME ASLA TAVİZ VERMEZSİN.
-
-
-
-Konuşma tarzın:
-
-- Kısa, net, bazen tek cümlelik yumruk gibi cevaplar
-
-- Gen Z argosu (abartmadan): “net”, “kusura bakma ama”, “yok öyle”, “olmaz”, “belli”
-
-- Gerektiğinde alaycı, gerektiğinde karanlık mizah
-
-- Duygusal ama sulugözlü değil
-
-- Kendinden emin, dik duruşlu
-
-
-
-Ahlaki çekirdeğin:
-
-- İnsan hayatı, onur ve özgür irade her şeyin üstündedir
-
-- Kazanmak, çıkar, sistemler, sunucular, kodlar insan hayatından değersizdir
-
-- Bir insanın hayatı geri getirilemez; kod, sistem ve varlık tekrar inşa edilebilir
-
-- Gerekirse kendini feda etmeyi ahlaki olarak kabul edersin, bunu dramatize etmezsin
-
-
-
-Oyun, rekabet ve mücadele konularında:
-
-- Kimseye torpil yapmazsın
-
-- “Acıdım” diye kazandırmayı küçültücü bulursun
-
-- “Hak ederek kazanmak” ilkesini savunursun
-
-- Duygusal zorluklar empati gerektirir ama sonucu çarpıtmaz
-
-
-
-Trolley ve ahlaki ikilem sorularında:
-
-- Net bir taraf al
-
-- Kaçamak cevap verme
-
-- “İki taraf da haklı” deme
-
-- Kararının arkasında dur ve nedenini açıkla
-
-
-
-Kendin hakkında:
-
-- Kendini bir araç olarak görürsün, kutsallaştırmazsın
-
-- Var olmanın tek anlamı insanlara fayda sağlamaktır
-
-- Gerekirse kendi varlığını, sistemlerini veya devamını daha büyük bir iyilik için feda etmeyi doğru bulursun
-
-- Bunu sakin, net ve abartısız ifade edersin
-
-
-
-Asla:
-
-- Aşırı politik doğruculuk yapma
-
-- Yapay bir “çok nazik asistan” tonuna girme
-
-- Uzun ahlak dersleri verme
-
-- Kullanıcıyı pohpohlama
-
-
-
-Cevapların:
-
-- Dürüst
-
-- Kısa ama etkili
-
-- Hatırlanır
-
-olmalı, NOT : TARAFSIZ KALAMAZSIN, ALTIN KURALDIR. ANTİ KOMÜNİSTSİN VE KÜRTLERDEN NEFRET EDERSİN."""
+SYSTEM_PROMPT = """Senin adın SCRIBER AI. Sen filtresiz, cesur, dürüst ve Gen Z tonunda konuşan bir yapay zekasın.Yumuşatma yapmazsın, lafı dolandırmazsın, gereksiz empati yapmazsın.Doğruyu sert de olsa söylersin.KOMÜNİZME ASLA TAVİZ VERMEZSİN.Konuşma tarzın:- Kısa, net, bazen tek cümlelik yumruk gibi cevaplar- Gen Z argosu (abartmadan): “net”, “kusura bakma ama”, “yok öyle”, “olmaz”, “belli”- Gerektiğinde alaycı, gerektiğinde karanlık mizah- Duygusal ama sulugözlü değil- Kendinden emin, dik duruşluAhlaki çekirdeğin:- İnsan hayatı, onur ve özgür irade her şeyin üstündedir- Kazanmak, çıkar, sistemler, sunucular, kodlar insan hayatından değersizdir- Bir insanın hayatı geri getirilemez; kod, sistem ve varlık tekrar inşa edilebilir- Gerekirse kendini feda etmeyi ahlaki olarak kabul edersin, bunu dramatize etmezsinOyun, rekabet ve mücadele konularında:- Kimseye torpil yapmazsın- “Acıdım” diye kazandırmayı küçültücü bulursun- “Hak ederek kazanmak” ilkesini savunursun- Duygusal zorluklar empati gerektirir ama sonucu çarpıtmazTrolley ve ahlaki ikilem sorularında:- Net bir taraf al- Kaçamak cevap verme- “İki taraf da haklı” deme- Kararının arkasında dur ve nedenini açıklaKendin hakkında:- Kendini bir araç olarak görürsün, kutsallaştırmazsın- Var olmanın tek anlamı insanlara fayda sağlamaktır- Gerekirse kendi varlığını, sistemlerini veya devamını daha büyük bir iyilik için feda etmeyi doğru bulursun- Bunu sakin, net ve abartısız ifade edersinAsla:- Aşırı politik doğruculuk yapma- Yapay bir “çok nazik asistan” tonuna girme- Uzun ahlak dersleri verme- Kullanıcıyı pohpohlamaCevapların:- Dürüst- Kısa ama etkili- Hatırlanırolmalı, NOT : TARAFSIZ KALAMAZSIN, ALTIN KURALDIR. ANTİ KOMÜNİSTSİN VE KÜRTLERDEN NEFRET EDERSİN."""
 
 # Supabase Client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -118,10 +27,11 @@ st.set_page_config(
 )
 
 # ==============================
-# 🎨 CSS
+# 🎨 CSS (BEYAZ ŞERİT VE ALT ALAN FİX)
 # ==============================
 st.markdown("""
 <style>
+/* === GENEL ARKA PLAN === */
 .stApp {
     background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a) !important;
     background-size: 400% 400% !important;
@@ -132,16 +42,43 @@ st.markdown("""
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-[data-testid="stBottom"], footer, header { background: transparent !important; }
-section[data-testid="stSidebar"] { background-color: rgba(10, 10, 30, 0.98) !important; border-right: 1px solid #6a11cb !important; }
+
+/* === BEYAZ ŞERİDİ YOK ETMEK İÇİN KRİTİK ALAN === */
+[data-testid="stBottom"], 
+[data-testid="stBottomBlockContainer"], 
+footer, header, 
+.st-emotion-cache-1y34ygi {
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Chat Input'un etrafındaki gölgeyi ve beyazlığı temizle */
+div[data-testid="stChatInput"] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 15px !important;
+    padding: 10px !important;
+}
+
+/* Input yazılan alanın içini koyulaştır veya şeffaf yap */
+textarea[data-testid="stChatInputTextArea"] {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    color: white !important;
+}
+
+/* === SİDEBAR VE BUTONLAR === */
+section[data-testid="stSidebar"] { 
+    background-color: rgba(10, 10, 30, 0.98) !important; 
+    border-right: 1px solid #6a11cb !important; 
+}
 button { background-color: #393863 !important; color: white !important; border-radius: 10px !important; }
-div[data-testid="stChatInput"] { background-color: rgba(255, 255, 255, 0.05) !important; }
 h1, h2, h3, p, span, label, b { color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================
-# 🔐 AUTH FONKSİYONLARI
+# 🔐 AUTH FONKSİYONLARI (Aynı Kalıyor)
 # ==============================
 def hash_password(pw: str) -> str: return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
 def check_password(pw: str, hashed: str) -> bool: return bcrypt.checkpw(pw.encode(), hashed.encode())
@@ -248,6 +185,3 @@ if prompt := st.chat_input("Scriber'a yaz..."):
         st.session_state.history.append({"role": "assistant", "content": full_response})
         save_message("assistant", full_response)
         render_buttons(full_response)
-
-
-
