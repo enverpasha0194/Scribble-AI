@@ -3,7 +3,8 @@ from openai import OpenAI
 from supabase import create_client, Client
 import bcrypt
 import time
-import uuid
+import html
+import streamlit.components.v1 as components  # 🔊 EKLENDİ
 
 # ==============================
 # 🔑 AYARLAR & KİŞİLİK (SYSTEM PROMPT)
@@ -12,9 +13,6 @@ SUPABASE_URL = "https://rhenrzjfkiefhzfkkwgv.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoZW5yempma2llZmh6Zmtrd2d2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNzY3MTMsImV4cCI6MjA4MTY1MjcxM30.gwjvIT5M8PyP9SBysXImyNblPm6XNwJTeZAayUeVCxU"
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
-
-COPY_ICON = "https://raw.githubusercontent.com/JustSouichi/copy-button/main/multimedia/images/copy-light.png"
-TTS_ICON  = "https://www.pngmart.com/files/17/Volume-Button-PNG-File.png"
 
 SYSTEM_PROMPT = """Senin adın SCRIBER AI. Sen filtresiz, cesur, dürüst ve Gen Z tonunda konuşan bir yapay zekasın.
 Yumuşatma yapmazsın, lafı dolandırmazsın, gereksiz empati pornosu yapmazsın.
@@ -62,110 +60,73 @@ Cevapların:
 - Kısa ama etkili
 - Hatırlanır
 olmalı."""
-# ↑↑↑ DOKUNULMADI
 
-# ==============================
 # Supabase Client
-# ==============================
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(
-    page_title="SCRIBER AI", 
-    page_icon=LOGO_URL, 
+    page_title="SCRIBER AI",
+    page_icon=LOGO_URL,
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================
-# 🎨 CSS + TTS JS (EKLENEN KISIM)
-# ==============================
-st.markdown(f"""
-<style>
-.action-bar {{
-    display:flex;
-    gap:10px;
-    margin-top:6px;
-}}
-.action-btn {{
-    width:20px;
-    cursor:pointer;
-    opacity:0.85;
-}}
-.action-btn:hover {{
-    opacity:1;
-    transform:scale(1.1);
-}}
-</style>
-
-<script>
-function bestVoice() {{
-  const voices = speechSynthesis.getVoices();
-  return voices.find(v => v.lang.startsWith("tr") &&
-    (v.name.includes("Google") || v.name.includes("Microsoft")))
-    || voices.find(v => v.lang.startsWith("tr"))
-    || voices[0];
-}}
-
-function speak(id) {{
-  const text = document.getElementById(id).innerText;
-  const u = new SpeechSynthesisUtterance(text);
-  u.voice = bestVoice();
-  u.rate = 1;
-  u.pitch = 1;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}}
-
-function copyText(id) {{
-  navigator.clipboard.writeText(
-    document.getElementById(id).innerText
-  );
-}}
-</script>
-""", unsafe_allow_html=True)
-
-# ==============================
-# 🔐 AUTH (AYNI)
-# ==============================
-def hash_password(pw): return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
-def check_password(pw, hashed): return bcrypt.checkpw(pw.encode(), hashed.encode())
-
-if "user" not in st.session_state:
-    st.session_state.auth_mode = st.session_state.get("auth_mode", "login")
-    st.title("SCRIBER AI")
-    # (auth kodun aynen devam ediyor – kısaltmadım mantık değişmedi)
-    st.stop()
-
-# ==============================
-# 🧠 CHAT
+# 🧠 CHAT EKRANI
 # ==============================
 client = OpenAI(base_url=f"{NGROK_URL}/v1", api_key="lm-studio")
 
-if "history" not in st.session_state:
-    st.session_state.history = []
-
-# Geçmiş mesajlar
-for msg in st.session_state.history:
-    uid = str(uuid.uuid4())
+# Geçmiş mesajları göster
+for msg in st.session_state.get("history", []):
     with st.chat_message(msg["role"], avatar=LOGO_URL if msg["role"]=="assistant" else None):
-        st.markdown(f"<div id='{uid}'>{msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(msg["content"])
+
+        # 🔊 KOPYALA + TTS (SADECE ASSISTANT)
         if msg["role"] == "assistant":
-            st.markdown(f"""
-            <div class="action-bar">
-              <img src="{COPY_ICON}" class="action-btn" onclick="copyText('{uid}')">
-              <img src="{TTS_ICON}"  class="action-btn" onclick="speak('{uid}')">
+            safe = html.escape(msg["content"])
+            components.html(f"""
+            <div style="margin-top:6px; display:flex; gap:10px;">
+              <img src="https://raw.githubusercontent.com/JustSouichi/copy-button/main/multimedia/images/copy-light.png"
+                   style="width:20px; cursor:pointer"
+                   onclick="navigator.clipboard.writeText(`{safe}`)">
+              <img src="https://www.pngmart.com/files/17/Volume-Button-PNG-File.png"
+                   style="width:20px; cursor:pointer"
+                   onclick="
+                     const u = new SpeechSynthesisUtterance(`{safe}`);
+                     u.lang='tr-TR';
+                     speechSynthesis.cancel();
+                     speechSynthesis.speak(u);
+                   ">
             </div>
-            """, unsafe_allow_html=True)
+            """, height=36)
 
 # Yeni mesaj
 if prompt := st.chat_input("Scriber'a yaz..."):
-    st.session_state.history.append({"role":"user","content":prompt})
+    st.session_state.history.append({"role": "user", "content": prompt})
+
     with st.chat_message("assistant", avatar=LOGO_URL):
-        messages = [{"role":"system","content":SYSTEM_PROMPT}] + st.session_state.history
         stream = client.chat.completions.create(
             model="llama3-turkish",
-            messages=messages,
+            messages=[{"role":"system","content":SYSTEM_PROMPT}] + st.session_state.history,
             stream=True
         )
-        response = st.write_stream(stream)
-        st.session_state.history.append({"role":"assistant","content":response})
+        full_response = st.write_stream(stream)
+        st.session_state.history.append({"role":"assistant","content":full_response})
+
+        # 🔊 KOPYALA + TTS (YENİ MESAJ)
+        safe = html.escape(full_response)
+        components.html(f"""
+        <div style="margin-top:6px; display:flex; gap:10px;">
+          <img src="https://raw.githubusercontent.com/JustSouichi/copy-button/main/multimedia/images/copy-light.png"
+               style="width:20px; cursor:pointer"
+               onclick="navigator.clipboard.writeText(`{safe}`)">
+          <img src="https://www.pngmart.com/files/17/Volume-Button-PNG-File.png"
+               style="width:20px; cursor:pointer"
+               onclick="
+                 const u = new SpeechSynthesisUtterance(`{safe}`);
+                 u.lang='tr-TR';
+                 speechSynthesis.cancel();
+                 speechSynthesis.speak(u);
+               ">
+        </div>
+        """, height=36)
