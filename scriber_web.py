@@ -49,7 +49,7 @@ html_code = """
         <p>
             KAPALIYIZ!<br>
             Uygulamamıza karşı gelen eleştiriler ve şikayetlerden ötürü Scriber AI'ı uzun süreli kapatma kararı aldık.<br><br>
-            Bizi destekleyen herkese teşekkür ederiz.
+            Bizi destekleyen herkese teşekkür ederiz..
         </p>
     </div>
 </body>
@@ -57,4 +57,5 @@ html_code = """
 """
 
 components.html(html_code, height=600)
+
 
