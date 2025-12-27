@@ -99,7 +99,7 @@ if not st.session_state.user:
 def load_chats():
     r = supabase.table("scribble_chats") \
         .select("*") \
-        .eq("user_id", st.session_state.user["id"]) \
+        .eq("uuid", st.session_state.user["id"]) \
         .order("created_at", desc=True) \
         .execute()
     return r.data or []
@@ -150,7 +150,7 @@ user_input = st.chat_input("Yaz bakalım...")
 if user_input:
     if not st.session_state.active_chat:
         chat = supabase.table("scribble_chats").insert({
-            "user_id": st.session_state.user["id"],
+            "uuid": st.session_state.user["id"],
             "title": user_input[:40]
         }).execute().data[0]
 
@@ -200,3 +200,4 @@ if user_input:
     })
 
     st.rerun()
+
