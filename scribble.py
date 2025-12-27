@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import time
-import uuid
+import id
 from supabase import create_client
 
 # =========================
@@ -55,7 +55,7 @@ def register(username, password):
         return None
 
     user = {
-        "id": str(uuid.uuid4()),
+        "id": str(id.id4()),
         "username": username,
         "password": password
     }
@@ -99,7 +99,7 @@ if not st.session_state.user:
 def load_chats():
     r = supabase.table("scribble_chats") \
         .select("*") \
-        .eq("uuid", st.session_state.user["id"]) \
+        .eq("id", st.session_state.user["id"]) \
         .order("created_at", desc=True) \
         .execute()
     return r.data or []
@@ -141,8 +141,8 @@ user_input = st.chat_input("Yaz bakalım...")
 if user_input:
     if not st.session_state.active_chat:
         chat = supabase.table("scribble_chats").insert({
-            "id": str(uuid.uuid4()),
-            "uuid": st.session_state.user["id"],
+            "id": str(id.id4()),
+            "id": st.session_state.user["id"],
             "title": user_input[:40]
         }).execute().data[0]
 
@@ -151,7 +151,7 @@ if user_input:
     chat_id = st.session_state.active_chat["id"]
 
     supabase.table("scribble_messages").insert({
-        "id": str(uuid.uuid4()),
+        "id": str(id.id4()),
         "chat_id": chat_id,
         "role": "user",
         "content": user_input
@@ -170,7 +170,7 @@ if user_input:
     reply = r.json()["choices"][0]["message"]["content"]
 
     supabase.table("scribble_messages").insert({
-        "id": str(uuid.uuid4()),
+        "id": str(id.id4()),
         "chat_id": chat_id,
         "role": "assistant",
         "content": reply
@@ -187,3 +187,4 @@ if user_input:
             time.sleep(0.01)
 
     st.rerun()
+
