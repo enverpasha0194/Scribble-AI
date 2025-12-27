@@ -13,37 +13,37 @@ NGROK_BASE = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LM_ENDPOINT = f"{NGROK_BASE}/v1/chat/completions"
 MODEL_NAME = "qwen2.5-7b-instruct"
 
+SYSTEM_PROMPT = """
+Senin adın Scriber AI.
+Net konuşursun.
+Sansür yok ama boş laf da yok.
+Teknik cevapları direkt verirsin.
+"""
+
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-# =========================
-# PAGE
-# =========================
-st.set_page_config("ScribbleAI", "✍️", layout="wide")
+st.set_page_config("Scriber AI", "✍️", layout="wide")
 
 # =========================
 # SESSION
 # =========================
-defaults = {
-    "user": None,
-    "chats": [],
-    "active_chat": None,
-    "messages": [],
-    "system_prompt": "Sen ScribbleAI'sın. Sansür yok. Net konuş."
-}
-for k, v in defaults.items():
-    if k not in st.session_state:
-        st.session_state[k] = v
+if "user" not in st.session_state:
+    st.session_state.user = None
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "active_chat" not in st.session_state:
+    st.session_state.active_chat = None
 
 # =========================
-# AUTH (USERNAME ONLY)
+# AUTH
 # =========================
 def login(username, password):
-    res = supabase.table("scribble_users") \
+    r = supabase.table("scribble_users") \
         .select("*") \
         .eq("username", username) \
         .eq("password", password) \
         .execute()
-    return res.data[0] if res.data else None
+    return r.data[0] if r.data else None
 
 def register(username, password):
     exists = supabase.table("scribble_users") \
@@ -63,10 +63,10 @@ def register(username, password):
     return user
 
 # =========================
-# LOGIN UI
+# LOGIN SCREEN
 # =========================
 if not st.session_state.user:
-    st.title("✍️ ScribbleAI")
+    st.title("✍️ Scriber AI")
 
     tab1, tab2 = st.tabs(["Giriş", "Kayıt"])
 
@@ -79,7 +79,7 @@ if not st.session_state.user:
                 st.session_state.user = user
                 st.rerun()
             else:
-                st.error("Hatalı kullanıcı adı veya şifre")
+                st.error("Hatalı giriş")
 
     with tab2:
         u = st.text_input("Kullanıcı adı", key="ru")
@@ -87,9 +87,9 @@ if not st.session_state.user:
         if st.button("Kayıt Ol"):
             user = register(u, p)
             if user:
-                st.success("Kayıt başarılı, giriş yap")
+                st.success("Kayıt tamam, giriş yap")
             else:
-                st.error("Bu kullanıcı adı alınmış")
+                st.error("Bu kullanıcı adı dolu")
 
     st.stop()
 
@@ -104,8 +104,6 @@ def load_chats():
         .execute()
     return r.data or []
 
-st.session_state.chats = load_chats()
-
 # =========================
 # SIDEBAR
 # =========================
@@ -116,7 +114,7 @@ with st.sidebar:
         st.session_state.active_chat = None
         st.session_state.messages = []
 
-    for c in st.session_state.chats:
+    for c in load_chats():
         if st.button(c["title"], key=c["id"]):
             st.session_state.active_chat = c
             m = supabase.table("scribble_messages") \
@@ -126,17 +124,10 @@ with st.sidebar:
                 .execute()
             st.session_state.messages = m.data or []
 
-    st.markdown("---")
-    st.session_state.system_prompt = st.text_area(
-        "🧠 Davranış",
-        st.session_state.system_prompt,
-        height=150
-    )
-
 # =========================
-# MAIN CHAT
+# CHAT UI
 # =========================
-st.title("✍️ ScribbleAI")
+st.title("✍️ Scriber AI")
 
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
@@ -150,30 +141,28 @@ user_input = st.chat_input("Yaz bakalım...")
 if user_input:
     if not st.session_state.active_chat:
         chat = supabase.table("scribble_chats").insert({
+            "id": str(uuid.uuid4()),
             "uuid": st.session_state.user["id"],
             "title": user_input[:40]
         }).execute().data[0]
 
         st.session_state.active_chat = chat
-        st.session_state.chats.insert(0, chat)
 
     chat_id = st.session_state.active_chat["id"]
 
     supabase.table("scribble_messages").insert({
+        "id": str(uuid.uuid4()),
         "chat_id": chat_id,
         "role": "user",
         "content": user_input
     }).execute()
 
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input
-    })
+    st.session_state.messages.append({"role": "user", "content": user_input})
 
     payload = {
         "model": MODEL_NAME,
         "messages": [
-            {"role": "system", "content": st.session_state.system_prompt}
+            {"role": "system", "content": SYSTEM_PROMPT}
         ] + st.session_state.messages
     }
 
@@ -181,10 +170,13 @@ if user_input:
     reply = r.json()["choices"][0]["message"]["content"]
 
     supabase.table("scribble_messages").insert({
+        "id": str(uuid.uuid4()),
         "chat_id": chat_id,
         "role": "assistant",
         "content": reply
     }).execute()
+
+    st.session_state.messages.append({"role": "assistant", "content": reply})
 
     with st.chat_message("assistant"):
         box = st.empty()
@@ -192,12 +184,6 @@ if user_input:
         for c in reply:
             txt += c
             box.markdown(txt)
-            time.sleep(0.015)
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": reply
-    })
+            time.sleep(0.01)
 
     st.rerun()
-
