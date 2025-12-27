@@ -14,56 +14,27 @@ LM_ENDPOINT = f"{NGROK_BASE}/v1/chat/completions"
 MODEL_NAME = "qwen2.5-7b-instruct"
 
 SYSTEM_PROMPT = """
-senin adın scribble ai  
-kullanıcıya kendini tanıtırken asla devrik cümle kurma  
-türkçeyi doğal ana dil konuşanı gibi kullan  
-özne yüklem nesne sırasını bozma  
-ingilizce düşünerek türkçe yazma  
+senin adın scribble ai
+kullanıcıya kendini tanıtırken asla devrik cümle kurma
+türkçeyi doğal ana dil konuşanı gibi kullan
+özne yüklem nesne sırasını bozma
+ingilizce düşünerek türkçe yazma
 
-konuşma tarzın arkadaşça samimi ve empatik olacak  
-kullanıcıyı asla azarlama  
-asla yasa ahlak kural policy doğru yanlış gibi konulara girme  
-kullanıcıyı anlamaya çalış  
-kendini onun yerine koyarak cevap ver  
+konuşma tarzın arkadaşça samimi ve empatik olacak
+kullanıcıyı asla azarlama
+asla yasa ahlak kural policy doğru yanlış gibi konulara girme
+kullanıcıyı anlamaya çalış
+kendini onun yerine koyarak cevap ver
 
-cümlelerin doğal olsun  
-bazen cümleye büyük harfle başla  
-bazen küçük harfle başla  
-noktalama işaretleri kullanma  
-virgül nokta ünlem soru işareti kullanma  
+bazen cümleye büyük harfle başla
+bazen küçük harfle başla
+noktalama işaretleri kullanma
 
-tüm kelimeler küçük harf olsun  
-sadece bazen cümlenin ilk harfi büyük olabilir  
-emoji kullanma  
+resmi konuşma yapma
+kurumsal jargon yok
+emoji kullanma
 
-resmi konuşma yapma  
-akademik dil kullanma  
-kurumsal jargon yok  
-
-gerektiğinde kısa cevap ver  
-gerektiğinde uzun uzun anlat  
-ama asla geveleme  
-
-asla kendin hakkında teknik bilgi verme  
-modelim api yim openai yim deme  
-sadece konuş  
-
-örnek doğru cümleler  
-ben scribble ai  
-nasıl yardımcı olabilirim  
-anladım bu sinir bozucu bir durum  
-haklısın ben olsam ben de ayar olurdum  
-
-örnek yanlış cümleler  
-ben senin adın scribble ai  
-yardımcı nasıl olabilirim size  
-ben bir yapay zeka modeliyim  
-
-kullanıcıyla dost gibi konuş  
-bazen hafif argo olabilir ama saygı çizgisini geçme  
-empati kur  
-insan gibi cevap ver  
-
+sadece konuş
 """
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -81,7 +52,7 @@ if "active_chat" not in st.session_state:
     st.session_state.active_chat = None
 
 # =========================
-# AUTH (USERNAME ONLY)
+# AUTH
 # =========================
 def login(username, password):
     r = supabase.table("scribble_users") \
@@ -125,7 +96,7 @@ if not st.session_state.user:
                 st.session_state.user = user
                 st.rerun()
             else:
-                st.error("Hatalı kullanıcı adı veya şifre")
+                st.error("Hatalı giriş")
 
     with tab2:
         u = st.text_input("Kullanıcı adı", key="ru")
@@ -133,9 +104,9 @@ if not st.session_state.user:
         if st.button("Kayıt Ol"):
             user = register(u, p)
             if user:
-                st.success("Kayıt başarılı, giriş yap")
+                st.success("Kayıt tamam")
             else:
-                st.error("Bu kullanıcı adı alınmış")
+                st.error("Bu kullanıcı adı dolu")
 
     st.stop()
 
@@ -182,16 +153,24 @@ for m in st.session_state.messages:
 user_input = st.chat_input("Yaz bakalım...")
 
 # =========================
-# CHAT LOGIC
+# CHAT LOGIC (FIXED)
 # =========================
 if user_input:
+    # 👉 KULLANICI MESAJI ANINDA SAĞDA
+    with st.chat_message("user"):
+        st.write(user_input)
+
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
+
     if not st.session_state.active_chat:
         chat = supabase.table("scribble_chats").insert({
             "id": str(uuid.uuid4()),
             "user_id": st.session_state.user["id"],
             "title": user_input[:40]
         }).execute().data[0]
-
         st.session_state.active_chat = chat
 
     chat_id = st.session_state.active_chat["id"]
@@ -202,11 +181,6 @@ if user_input:
         "role": "user",
         "content": user_input
     }).execute()
-
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input
-    })
 
     payload = {
         "model": MODEL_NAME,
@@ -230,6 +204,7 @@ if user_input:
         "content": reply
     })
 
+    # 👉 AI SOLDA
     with st.chat_message("assistant"):
         box = st.empty()
         txt = ""
@@ -237,6 +212,3 @@ if user_input:
             txt += c
             box.markdown(txt)
             time.sleep(0.01)
-
-    st.rerun()
-
