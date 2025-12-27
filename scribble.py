@@ -40,7 +40,7 @@ kullanıcı nasıl konuşursa onun tarzına adapte ol'
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-st.set_page_config("Scriber AI", "✍️", layout="wide")
+st.set_page_config("scribble AI", "✍️", layout="wide")
 
 # =========================
 # SESSION
@@ -84,7 +84,7 @@ def register(username, password):
 # LOGIN UI
 # =========================
 if not st.session_state.user:
-    st.title("✍️ Scriber AI")
+    st.title("✍️ scribble AI")
 
     tab1, tab2 = st.tabs(["Giriş", "Kayıt"])
 
@@ -145,7 +145,7 @@ with st.sidebar:
 # =========================
 # CHAT UI
 # =========================
-st.title("✍️ Scriber AI")
+st.title("✍️ scribble AI")
 
 for m in st.session_state.messages:
     with st.chat_message(m["role"]):
@@ -213,5 +213,6 @@ if user_input:
             txt += c
             box.markdown(txt)
             time.sleep(0.01)
+
 
 
