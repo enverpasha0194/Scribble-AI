@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+import uuid
 from supabase import create_client
 
 # =========================
@@ -20,7 +21,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 st.set_page_config("ScribbleAI", "✍️", layout="wide")
 
 # =========================
-# SESSION INIT
+# SESSION
 # =========================
 defaults = {
     "user": None,
@@ -34,28 +35,35 @@ for k, v in defaults.items():
         st.session_state[k] = v
 
 # =========================
-# AUTH
+# AUTH (USERNAME ONLY)
 # =========================
-def login(email, password):
-    return supabase.auth.sign_in_with_password({
-        "email": email,
-        "password": password
-    })
+def login(username, password):
+    res = supabase.table("scribble_users") \
+        .select("*") \
+        .eq("username", username) \
+        .eq("password", password) \
+        .execute()
+    return res.data[0] if res.data else None
 
-def register(email, password):
-    res = supabase.auth.sign_up({
-        "email": email,
+def register(username, password):
+    exists = supabase.table("scribble_users") \
+        .select("id") \
+        .eq("username", username) \
+        .execute()
+
+    if exists.data:
+        return None
+
+    user = {
+        "id": str(uuid.uuid4()),
+        "username": username,
         "password": password
-    })
-    if res.user:
-        supabase.table("scribble_users").insert({
-            "id": res.user.id,
-            "email": email
-        }).execute()
-    return res
+    }
+    supabase.table("scribble_users").insert(user).execute()
+    return user
 
 # =========================
-# LOGIN SCREEN
+# LOGIN UI
 # =========================
 if not st.session_state.user:
     st.title("✍️ ScribbleAI")
@@ -63,23 +71,25 @@ if not st.session_state.user:
     tab1, tab2 = st.tabs(["Giriş", "Kayıt"])
 
     with tab1:
-        e = st.text_input("Email")
+        u = st.text_input("Kullanıcı adı")
         p = st.text_input("Şifre", type="password")
         if st.button("Giriş"):
-            r = login(e, p)
-            if r.user:
-                st.session_state.user = r.user
+            user = login(u, p)
+            if user:
+                st.session_state.user = user
                 st.rerun()
             else:
-                st.error("Giriş başarısız")
+                st.error("Hatalı kullanıcı adı veya şifre")
 
     with tab2:
-        e = st.text_input("Email", key="re")
+        u = st.text_input("Kullanıcı adı", key="ru")
         p = st.text_input("Şifre", type="password", key="rp")
         if st.button("Kayıt Ol"):
-            r = register(e, p)
-            if r.user:
+            user = register(u, p)
+            if user:
                 st.success("Kayıt başarılı, giriş yap")
+            else:
+                st.error("Bu kullanıcı adı alınmış")
 
     st.stop()
 
@@ -89,7 +99,7 @@ if not st.session_state.user:
 def load_chats():
     r = supabase.table("scribble_chats") \
         .select("*") \
-        .eq("user_id", st.session_state.user.id) \
+        .eq("user_id", st.session_state.user["id"]) \
         .order("created_at", desc=True) \
         .execute()
     return r.data or []
@@ -135,14 +145,15 @@ for m in st.session_state.messages:
 user_input = st.chat_input("Yaz bakalım...")
 
 # =========================
-# CHAT FLOW
+# CHAT LOGIC
 # =========================
 if user_input:
     if not st.session_state.active_chat:
         chat = supabase.table("scribble_chats").insert({
-            "user_id": st.session_state.user.id,
+            "user_id": st.session_state.user["id"],
             "title": user_input[:40]
         }).execute().data[0]
+
         st.session_state.active_chat = chat
         st.session_state.chats.insert(0, chat)
 
@@ -167,9 +178,7 @@ if user_input:
     }
 
     r = requests.post(LM_ENDPOINT, json=payload, timeout=120)
-    data = r.json()
-
-    reply = data["choices"][0]["message"]["content"]
+    reply = r.json()["choices"][0]["message"]["content"]
 
     supabase.table("scribble_messages").insert({
         "chat_id": chat_id,
