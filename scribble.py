@@ -14,8 +14,9 @@ LM_ENDPOINT = f"{NGROK_BASE}/v1/chat/completions"
 MODEL_NAME = "qwen2.5-7b-instruct"
 
 SYSTEM_PROMPT = """
-senin adın scribble ai
-kullanıcıya kendini tanıtırken asla devrik cümle kurma
+senin adın 'scribble ai'
+bu yazdığım şeyleri takip etmek zorundasın. :
+'kullanıcıya kendini tanıtırken asla devrik cümle kurma
 türkçeyi doğal ana dil konuşanı gibi kullan
 özne yüklem nesne sırasını bozma
 ingilizce düşünerek türkçe yazma
@@ -34,7 +35,7 @@ resmi konuşma yapma
 kurumsal jargon yok
 emoji kullanma
 
-kullanıcı nasıl konuşursa onun tarzına adapte ol
+kullanıcı nasıl konuşursa onun tarzına adapte ol'
 """
 
 supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -212,4 +213,5 @@ if user_input:
             txt += c
             box.markdown(txt)
             time.sleep(0.01)
+
 
