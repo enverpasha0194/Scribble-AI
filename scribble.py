@@ -12,7 +12,7 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 # BURAYA GitHub'daki ses dosyasının RAW linkini yapıştır:
-BEEP_SOUND_URL = "https://github.com/enverpasha0194/Scribble-AI/blob/main/beep" 
+BEEP_SOUND_URL = "https://github.com/enverpasha0194/Scribble-AI/blob/fb5f69a69980f0b22d5f4b1611d4587961f23e01/beep.mp3" 
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -178,3 +178,4 @@ if prompt := st.chat_input("Scriber'a yaz..."):
             {"username": st.session_state.user, "role": "assistant", "content": full_response, "chat_id": st.session_state.chat_id, "chat_title": title}
         ]).execute()
     except: pass
+
