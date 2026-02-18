@@ -13,7 +13,7 @@ NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
 # Senin oluşturduğun doğrudan oynatma linki
-BEEP_SOUND_URL = "https://drive.usercontent.com/download?id=1j4kfNkil6HR9fOOkVf1OoGYs7Xff1Rys&export=play&authuser=1"
+BEEP_SOUND_URL = "https://audio.jukehost.co.uk/mziBozmyh98u5i9TLvz7CuHKSAFv6zRN"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -170,3 +170,4 @@ if prompt := st.chat_input("Scriber'a yaz..."):
             {"username": st.session_state.user, "role": "assistant", "content": full_response, "chat_id": st.session_state.chat_id, "chat_title": title}
         ]).execute()
     except: pass
+
