@@ -12,8 +12,8 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 NGROK_URL = "https://hydropathical-duodecastyle-camron.ngrok-free.dev"
 LOGO_URL = "https://i.ibb.co/CD44FDc/Chat-GPT-mage-17-Ara-2025-23-59-13.png"
 
-# BURAYA GitHub'dan aldığın RAW linkini koy. Örnek format:
-# BEEP_SOUND_URL = "https://raw.githubusercontent.com/kullanici/repo/main/beep.mp3"
+# NOT: Buraya ses dosyasının DOĞRUDAN (direct) linkini koymalısın.
+# Eğer GitHub'a attıysan 'Raw' butonuna basıp gelen linki yapıştır.
 BEEP_SOUND_URL = "https://audio.jukehost.co.uk/mziBozmyh98u5i9TLvz7CuHKSAFv6zRN" 
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -21,11 +21,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 st.set_page_config(page_title="SCRIBER AI", page_icon=LOGO_URL, layout="wide")
 
 # ==============================
-# ✨ CSS: WAVE, SIDEBAR VE BEYAZ ŞERİT FİX
+# ✨ CSS: TAM DÜZENLEME (WAVE, SIDEBAR, BEYAZ ŞERİT)
 # ==============================
 st.markdown(f"""
 <style>
-    /* 1. ARKA PLAN: WAVE ANIMASYONU */
+    /* 1. ARKA PLAN: LACİVERT-MOR-MAVİ WAVE ANIMASYONU */
     .stApp {{
         background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1e215a);
         background-size: 400% 400% !important;
@@ -37,7 +37,7 @@ st.markdown(f"""
         100% {{ background-position: 0% 50%; }}
     }}
 
-    /* 2. BEYAZ ŞERİDİ TAMAMEN SİL */
+    /* 2. ALTTAN BEYAZ ŞERİDİ SİL (BÜTÜN CACHE SINIFLARIYLA) */
     [data-testid="stBottomBlockContainer"] {{
         background: transparent !important;
         background-color: transparent !important;
@@ -45,39 +45,36 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
     .st-emotion-cache-1y34ygi, .e4man117, .st-emotion-cache-tn0cau, .ek2vi383, .st-emotion-cache-1vo6xi6 {{
+        background-color: transparent !important;
         background: transparent !important;
         border: none !important;
-        box-shadow: none !important;
     }}
 
-    /* 3. SIDEBAR: BUTONLAR KOYU MOR (#353254), YAZILAR BEYAZ */
+    /* 3. SIDEBAR: BUTONLAR KOYU MOR, YAZILAR BEYAZ */
     section[data-testid="stSidebar"] {{
         background-color: rgba(5, 5, 20, 0.95) !important;
-        border-right: 1px solid #6a11cb !important;
     }}
     div[data-testid="stSidebar"] button {{
-        background-color: #353254 !important;
-        color: #ffffff !important; /* Yazılar bembeyaz ve okunur */
-        border: 1px solid #4b4870 !important;
+        background-color: #353254 !important; /* Koyu mor buton */
+        color: #ffffff !important; /* Beyaz yazı - OKUNUR YAPILDI */
+        border: 1px solid #6a11cb !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        width: 100%;
         text-align: left !important;
     }}
     div[data-testid="stSidebar"] button:hover {{
         background-color: #4b4870 !important;
-        border-color: #ffffff !important;
+        border-color: white !important;
     }}
 
-    /* 4. GENEL DÜZENLEME */
+    /* 4. GENEL TEMİZLİK */
     header, footer, #MainMenu {{visibility: hidden;}}
-    h1, p, span, label, .stMarkdown {{ color: white !important; }}
+    p, span, label, h1 {{ color: white !important; }}
     
-    /* Chat Input Stil */
     div[data-testid="stChatInput"] {{
-        background-color: rgba(255, 255, 255, 0.05) !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
         border: 1px solid #6a11cb !important;
-        border-radius: 15px !important;
+        border-radius: 20px !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -90,22 +87,24 @@ def check_password(pw, hashed):
 
 if "user" not in st.session_state:
     st.markdown("<h1 style='text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
+    # Giriş/Kayıt mantığı (Basit tutuldu)
     u = st.text_input("Kullanıcı adı")
     p = st.text_input("Şifre", type="password")
-    if st.button("Giriş Yap", use_container_width=True):
+    if st.button("Giriş", use_container_width=True):
         res = supabase.table("scriber_users").select("*").eq("username", u).execute()
         if res.data and check_password(p, res.data[0]["password"]):
-            st.session_state.user = res.data[0]["username"]; st.rerun()
+            st.session_state.user = res.data[0]["username"]
+            st.rerun()
     st.stop()
 
-# --- CHAT MANTIĞI ---
+# --- SOHBET YÖNETİMİ ---
 if "chat_id" not in st.session_state: st.session_state.chat_id = str(uuid.uuid4())
 if "history" not in st.session_state: st.session_state.history = []
 
 with st.sidebar:
     st.image(LOGO_URL, width=100)
     st.write(f"👤 **{st.session_state.user}**")
-    if st.button("➕ Yeni Sohbet"):
+    if st.button("➕ Yeni Sohbet", use_container_width=True):
         st.session_state.chat_id = str(uuid.uuid4()); st.session_state.history = []; st.rerun()
     st.write("---")
     try:
@@ -114,19 +113,22 @@ with st.sidebar:
         for c in chats.data:
             if c["chat_id"] not in seen and c["chat_title"]:
                 seen.add(c["chat_id"])
-                if st.button(f"💬 {c['chat_title']}", key=c["chat_id"]):
+                if st.button(c["chat_title"], key=c["chat_id"], use_container_width=True):
                     msgs = supabase.table("messages").select("role,content").eq("chat_id", c["chat_id"]).order("created_at").execute()
                     st.session_state.history = msgs.data; st.session_state.chat_id = c["chat_id"]; st.rerun()
     except: pass
 
+# --- ANA EKRAN ---
 st.markdown("<h1 style='text-align:center'>SCRIBER AI</h1>", unsafe_allow_html=True)
 client = OpenAI(base_url=f"{NGROK_URL}/v1", api_key="lm-studio")
 
+# Geçmişi Bas (Robot yerine Logo)
 for msg in st.session_state.history:
-    avatar = LOGO_URL if msg["role"] == "assistant" else None
-    with st.chat_message(msg["role"], avatar=avatar):
+    av = LOGO_URL if msg["role"] == "assistant" else None
+    with st.chat_message(msg["role"], avatar=av):
         st.markdown(msg["content"])
 
+# Giriş ve Yanıt
 if prompt := st.chat_input("Scriber'a yaz..."):
     st.session_state.history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -134,9 +136,10 @@ if prompt := st.chat_input("Scriber'a yaz..."):
 
     with st.chat_message("assistant", avatar=LOGO_URL):
         placeholder = st.empty()
+        # Ses efekti için alan
         sound_placeholder = st.empty()
         
-        # 🔊 SESİ LOOP OLARAK BAŞLAT
+        # SESİ BAŞLAT (Typing başladığı an)
         sound_placeholder.markdown(f"""
             <audio autoplay loop>
                 <source src="{BEEP_SOUND_URL}" type="audio/mpeg">
@@ -152,12 +155,12 @@ if prompt := st.chat_input("Scriber'a yaz..."):
         
         placeholder.markdown(full_response)
         
-        # 🔇 SESİ DURDUR
+        # SESİ DURDUR (Yazma bittiği an)
         sound_placeholder.empty()
         
         st.session_state.history.append({"role": "assistant", "content": full_response})
 
-    # Kayıt
+    # Kayıt (Hata vermemesi için try-except)
     try:
         title = prompt[:20] + "..."
         supabase.table("messages").insert([
